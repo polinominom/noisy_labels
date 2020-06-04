@@ -50,4 +50,3 @@ if not os.path.exists("./adjusted_data"):
 for k,v in file_id_dict.items():
     destination = "./adjusted_data/%s"%str(k)
     download_file_from_google_drive(v, destination)
-    break
