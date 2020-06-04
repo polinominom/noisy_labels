@@ -7,19 +7,27 @@ Original file is located at
     https://colab.research.google.com/drive/1Up66s8R2xK4yRqBX0sGYIZpyZ1ncOnhd
 """
 
-import tensorflow as tf
-import pandas as pd
 import os
 import datetime
-from google.colab import drive
 import pickle
+import numpy as np
+import pandas as pd
+import tensorflow as tf
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, Conv2D, MaxPool2D , Flatten
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
-import numpy as np
 from tensorflow.keras.callbacks import CSVLogger
 
+from google.colab import drive
 drive.mount('/content/gdrive')
+
+def unpickle(fname):
+    with open(fname, 'rb') as fo:
+        return pickle.load(fo
+                           )
+def save_ndarray(fname, data):
+    with open(fname, 'wb') as fp:
+        pickle.dump(data, fp)
 
 """# Model Implementations
 
@@ -89,17 +97,16 @@ m3 = compile_model(m3, binary=True)
 
 """# Train"""
 
-#TODO: finish get data
-def get_train_data():
-  #todo
-  return "",""
+def get_semantc_noise_generation_train_data(limit=1500):
+  x_1 = unpickle("./adjusted_data/adjusted_train_images_1000")  
+  x_2 = unpickle("./adjusted_data/adjusted_train_images_2000")
+  y_1 = unpickle("./labels/train_label_1000")
+  y_2 = unpickle("./labels/train_label_2000")
+  x = np.concatenate((x_1, x_2))[limit]
+  y = np.concatenate((y_1, y_2))[limit]
+  return x, y
 
-x_train, y_train = get_train_data()
-
-# get the 5% of the data for semantic noise generation
-amount = int(len(x_train)*0.005)
-x_train = x_train[:amount]
-y_train = y_train[:amount]
+x_train, y_train = get_semantc_noise_generation_train_data(limit=1500)
 
 epochs = 200
 history1 = m.fit(x_train, y_train, epochs = epochs, batch_size = b, verbose=1, validation_split=0.8, callbacks=callbacks)
