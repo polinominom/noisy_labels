@@ -1,2 +1,3 @@
 .DS_Store
 adjusted_data/*
+!adjusted_data
