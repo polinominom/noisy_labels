@@ -8,8 +8,9 @@ Original file is located at
 """
 
 import os
-import datetime
+import json
 import pickle
+import datetime
 import numpy as np
 import pandas as pd
 import tensorflow as tf
@@ -21,6 +22,22 @@ from tensorflow.keras.callbacks import CSVLogger
 from google.colab import drive
 drive.mount('/content/gdrive')
 
+# MODEL save & load
+def save_model(model, destination):
+  model.savee(destination)
+
+def load_model(source):
+  tf.keras.models.load_model(source)
+  pass
+
+# JSON save & load
+def get_history(name):
+  return json.load(open(name,"r"))
+
+def save_history(history, name):
+  json.dump(history, open(name, 'w'))
+
+# ndarray save & load
 def unpickle(fname):
     with open(fname, 'rb') as fo:
         return pickle.load(fo
@@ -108,7 +125,29 @@ def get_semantc_noise_generation_train_data(limit=1500):
 
 x_train, y_train = get_semantc_noise_generation_train_data(limit=1500)
 
+# create history folder if it doesn't exist
+if not os.path.exists("./history"):
+  os.mkdir("./history")
+
+# create models folder if it doesn't exist
+if not os.path.exists("./models"):
+  os.mkdir("./models")
+
+# set number of epochs. This might change later
 epochs = 200
+
+# train and save results of densenet121
 history1 = m.fit(x_train, y_train, epochs = epochs, batch_size = b, verbose=1, validation_split=0.8, callbacks=callbacks)
+save_history(history1.history, "./history/history1.json")
+save_model(m1, "./models/m1")
+
+# train and save results of resnet50
 history2 = m2.fit(x_train, y_train, epochs = epochs, batch_size = b, verbose=1, validation_split=0.8, callbacks=callbacks)
+save_history(history2.history, "./history/history2.json")
+save_model(m2, "./models/m2")
+
+# train and save results of vgg16
 history3 = m3.fit(x_train, y_train, epochs = epochs, batch_size = b, verbose=1, validation_split=0.8, callbacks=callbacks)
+save_history(history3.history, "./history/history3.json")
+save_model(m2, "./models/m3")
+

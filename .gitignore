@@ -1,3 +1,5 @@
 .DS_Store
 adjusted_data/*
 !adjusted_data
+models/
+history/
