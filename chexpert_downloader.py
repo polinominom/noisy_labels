@@ -44,6 +44,10 @@ for i in range(len(data)):
     file_id_dict[k] = parsed_id
 
 
+if not os.path.exists("./adjusted_data"):
+    os.mkdir("./adjusted_data")
+
 for k,v in file_id_dict.items():
     destination = "./adjusted_data/%s"%str(k)
     download_file_from_google_drive(v, destination)
+    break
