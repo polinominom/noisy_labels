@@ -96,13 +96,13 @@ def compile_model(model, binary=False):
   return model
 
 m =get_densenet()
-m.summary()
+#m.summary()
 
 m2 = get_resnet50()
-m2.summary()
+#m2.summary()
 
 m3 = get_vgg16()
-m3.summary()
+#m3.summary()
 
 # compile model example
 m = compile_model(m, binary=True)
@@ -162,7 +162,8 @@ epochs = 200
 # set batch
 b=64
 
-# convert binary to categorical
+# convert "nan"s to "0" and binary(1-0) to categorical[1,0] in order to run the models
+sem_y_train[np.where(sem_y_train!=1.0)] = 0.0
 sem_y_train = tf.keras.utils.to_categorical(sem_y_train, num_classes=2)
 # train and save results of densenet121
 callbacks = [tf.keras.callbacks.ModelCheckpoint(filepath='./models/densenet', save_best_only=False), CSVLogger("./history/densenet.csv", append=True)] 
