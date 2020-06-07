@@ -114,17 +114,27 @@ m3 = compile_model(m3, binary=True)
 
 """# Train"""
 
-def get_semantc_noise_generation_train_data(limit=1500):
-  x_1 = unpickle("./adjusted_data/adjusted_train_images_1000")  
-  x_2 = unpickle("./adjusted_data/adjusted_train_images_2000")
-  y_1 = unpickle("./labels/train_label_1000")
-  y_2 = unpickle("./labels/train_label_2000")
-  x = np.concatenate((x_1, x_2))[limit]
-  y = np.concatenate((y_1, y_2))[limit]
-  return x, y
+def get_semantic_noise_generation_train_data(limit=1500):
+  pos_count = limit//2
+  neg_count = pos_count
+  general_x = np.arange([])
+  general_y = np.arange([])
+  for i in range(1000, 51000, 1000):
+    local_x = unpickle("./adjusted_data/adjusted_train_images_%i"%i)
+    local_y = unpickle("./labels/train_label_%i"%i)
+    general_x = np.concatenate((general_x, local_x))
+    general_y = np.concatenate((general_y, local_y))
+  return general_x, general_y
 
-x_train, y_train = get_semantc_noise_generation_train_data(limit=1500)
+sem_x_train, sem_y_train = get_semantic_noise_generation_train_data(limit=1500)
 
+print("sem_x_len:%s"%str(len(sem_x_train)))
+print("sem_y_len:%s"%str(len(sem_y_train)))
+print("sem_pos_len:%s"%str(len(np.where(sem_y_train==1.0)[0])))
+print("sem_neg_len:%s"%str(len(np.where(sem_y_train!=1.0)[0])))
+print("-----------------------------------------------")
+
+exit()
 # create history folder if it doesn't exist
 if not os.path.exists("./history"):
   os.mkdir("./history")
