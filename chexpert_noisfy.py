@@ -119,7 +119,7 @@ def get_semantic_noise_generation_train_data(limit=1500):
   neg_count = pos_count
   general_x = None
   general_y = None
-  for i in range(1000, 51000, 1000):
+  for i in range(1000, 131000, 1000):
     local_x = unpickle("./adjusted_data/adjusted_train_images_%i"%i)
     local_y = unpickle("./labels/train_label_%i"%i)
     if type(general_x)==type(None):
@@ -135,13 +135,6 @@ def get_semantic_noise_generation_train_data(limit=1500):
   general_y = np.concatenate((general_y[pos_indices], general_y[neg_indices]))
   return general_x, general_y
 
-sem_x_train, sem_y_train = get_semantic_noise_generation_train_data(limit=1500)
-
-print("sem_neg_len:%s"%str(len(np.where(sem_y_train!=1.0)[0])))
-print("sem_pos_len:%s"%str(len(np.where(sem_y_train==1.0)[0])))
-print("-----------------------------------------------")
-
-exit()
 # create history folder if it doesn't exist
 if not os.path.exists("./history"):
   os.mkdir("./history")
@@ -149,6 +142,20 @@ if not os.path.exists("./history"):
 # create models folder if it doesn't exist
 if not os.path.exists("./models"):
   os.mkdir("./models")
+
+# create semantic train folder if it doesn't exist
+if not  os.path.exists("./semantic_train_data"): 
+  os.mkdir("./semantic_train_data")
+
+# get semantic train data and their labels from the folder if they exists.
+# otherwise; get the data from the adjusted folder and save it.
+if os.path.exists("./semantic_train_data/sem_train") and os.path.exists("./semantic_train_data/sem_labels"):
+  sem_x_train = unpickle("./semantic_train_data/sem_train")
+  sem_y_train = unpickle("./semantic_train_data/sem_labels")
+else:
+  sem_x_train, sem_y_train = get_semantic_noise_generation_train_data(limit=1500)
+  save_ndarray(sem_x_train, "./semantic_train_data/sem_train")
+  save_ndarray(sem_y_train, "./semantic_train_data/sem_labels")
 
 # set number of epochs. This might change later
 epochs = 200

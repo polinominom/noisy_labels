@@ -1,6 +1,7 @@
 .DS_Store
-adjusted_data/*
-!adjusted_data
+token.pickle
+#folders
 models/
 history/
-token.pickle
+semantic_train_data/
+adjusted_data/*
