@@ -17,6 +17,7 @@ def download_file_from_google_drive(id, destination):
         print("Token confirmation failed!")
 
 def get_confirm_token(response):
+    print(response)
     for key, value in response.cookies.items():
         print("key: %s - value: %s"%(str(key),str(value)))
         if key.startswith('download_warning'):
@@ -50,3 +51,4 @@ if not os.path.exists("./adjusted_data"):
 for k,v in file_id_dict.items():
     destination = "./adjusted_data/%s"%str(k)
     download_file_from_google_drive(k, destination)
+    break
