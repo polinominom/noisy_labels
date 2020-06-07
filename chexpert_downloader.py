@@ -15,9 +15,10 @@ def download_file_from_google_drive(id, destination):
         save_response_content(response, destination)    
     else:
         print("Token confirmation failed!")
+        save_response_content(response, destination)
 
 def get_confirm_token(response):
-    print(response)
+    print(response.)
     for key, value in response.cookies.items():
         print("key: %s - value: %s"%(str(key),str(value)))
         if key.startswith('download_warning'):
