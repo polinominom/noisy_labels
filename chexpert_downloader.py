@@ -2,6 +2,7 @@
 import requests
 import os
 import pandas as pd
+from google_drive_downloader import GoogleDriveDownloader as gdd
 
 def download_file_from_google_drive(id, destination):
     URL = "https://docs.google.com/uc?export=download"
@@ -11,8 +12,9 @@ def download_file_from_google_drive(id, destination):
     if token:
         params = { 'id' : id, 'confirm' : token }
         response = session.get(URL, params = params, stream = True)
-
-    save_response_content(response, destination)    
+        save_response_content(response, destination)    
+    else:
+        print("Token confirmation failed!")
 
 def get_confirm_token(response):
     for key, value in response.cookies.items():
@@ -29,9 +31,6 @@ def save_response_content(response, destination):
             if chunk: # filter out keep-alive new chunks
                 f.write(chunk)
 
-def get_destination(name):
-    return ""
-    pass
 file_id_dict = {}
 data = pd.read_csv("./file_ids.csv",  header=None)
 for i in range(len(data)):
@@ -49,4 +48,4 @@ if not os.path.exists("./adjusted_data"):
 
 for k,v in file_id_dict.items():
     destination = "./adjusted_data/%s"%str(k)
-    download_file_from_google_drive(v, destination)
+    download_file_from_google_drive(k, destination)
