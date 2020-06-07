@@ -19,8 +19,8 @@ from tensorflow.keras.layers import Dense, Conv2D, MaxPool2D , Flatten
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras.callbacks import CSVLogger
 
-from google.colab import drive
-drive.mount('/content/gdrive')
+#from google.colab import drive
+#drive.mount('/content/gdrive')
 
 # MODEL save & load
 def save_model(model, destination):
@@ -117,13 +117,17 @@ m3 = compile_model(m3, binary=True)
 def get_semantic_noise_generation_train_data(limit=1500):
   pos_count = limit//2
   neg_count = pos_count
-  general_x = np.arange([])
-  general_y = np.arange([])
+  general_x = None
+  general_y = None
   for i in range(1000, 51000, 1000):
     local_x = unpickle("./adjusted_data/adjusted_train_images_%i"%i)
     local_y = unpickle("./labels/train_label_%i"%i)
-    general_x = np.concatenate((general_x, local_x))
-    general_y = np.concatenate((general_y, local_y))
+    if type(general_x)==type(None):
+      general_x = local_x
+      general_y = local_y
+    else:
+      general_x = np.concatenate((general_x, local_x))
+      general_y = np.concatenate((general_y, local_y))
 
   pos_indices = np.where(general_y==1.0)[0][:pos_count]
   neg_indices = np.where(general_y!=1.0)[0][:neg_count]

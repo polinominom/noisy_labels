@@ -3,3 +3,4 @@ adjusted_data/*
 !adjusted_data
 models/
 history/
+token.pickle

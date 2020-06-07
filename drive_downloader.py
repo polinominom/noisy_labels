@@ -68,7 +68,7 @@ def main():
     
 
 if __name__ == '__main__':
-    if not os.path.exists('./adjsted_data'):
+    if not os.path.exists('./adjusted_data'):
         os.mkdir("./adjusted_data")
 
     main()
