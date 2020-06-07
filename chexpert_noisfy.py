@@ -150,28 +150,33 @@ if not  os.path.exists("./semantic_train_data"):
 # get semantic train data and their labels from the folder if they exists.
 # otherwise; get the data from the adjusted folder and save it.
 if os.path.exists("./semantic_train_data/sem_train") and os.path.exists("./semantic_train_data/sem_labels"):
+  print("Loading semantic train data...")
   sem_x_train = unpickle("./semantic_train_data/sem_train")
   sem_y_train = unpickle("./semantic_train_data/sem_labels")
 else:
-  sem_x_train, sem_y_train = get_semantic_noise_generation_train_data(limit=1500)
-  save_ndarray(sem_x_train, "./semantic_train_data/sem_train")
-  save_ndarray(sem_y_train, "./semantic_train_data/sem_labels")
+  print("Semantic train data selection started...")
+  sem_x_train, sem_y_train = get_semantic_noise_generation_train_data(limit=11200)
+  print("Selected semantic train data saving...")
+  save_ndarray("./semantic_train_data/sem_train",sem_x_train)
+  save_ndarray("./semantic_train_data/sem_labels",sem_y_train)
 
 # set number of epochs. This might change later
 epochs = 200
-
+# set batch
+b=64
+ 
 # train and save results of densenet121
-history1 = m.fit(x_train, y_train, epochs = epochs, batch_size = b, verbose=1, validation_split=0.8, callbacks=callbacks)
+history1 = m.fit(sem_x_train, sem_y_train, epochs = epochs, batch_size = b, verbose=1, validation_split=0.8, callbacks=callbacks)
 save_history(history1.history, "./history/history1.json")
 save_model(m1, "./models/m1")
 
 # train and save results of resnet50
-history2 = m2.fit(x_train, y_train, epochs = epochs, batch_size = b, verbose=1, validation_split=0.8, callbacks=callbacks)
+history2 = m2.fit(sem_x_train, sem_y_train, epochs = epochs, batch_size = b, verbose=1, validation_split=0.8, callbacks=callbacks)
 save_history(history2.history, "./history/history2.json")
 save_model(m2, "./models/m2")
 
 # train and save results of vgg16
-history3 = m3.fit(x_train, y_train, epochs = epochs, batch_size = b, verbose=1, validation_split=0.8, callbacks=callbacks)
+history3 = m3.fit(sem_x_train, sem_y_train, epochs = epochs, batch_size = b, verbose=1, validation_split=0.8, callbacks=callbacks)
 save_history(history3.history, "./history/history3.json")
 save_model(m2, "./models/m3")
 
