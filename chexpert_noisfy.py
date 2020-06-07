@@ -124,14 +124,17 @@ def get_semantic_noise_generation_train_data(limit=1500):
     local_y = unpickle("./labels/train_label_%i"%i)
     general_x = np.concatenate((general_x, local_x))
     general_y = np.concatenate((general_y, local_y))
+
+  pos_indices = np.where(general_y==1.0)[0][:pos_count]
+  neg_indices = np.where(general_y!=1.0)[0][:neg_count]
+  general_x = np.concatenate((general_x[pos_indices], general_x[neg_indices]))
+  general_y = np.concatenate((general_y[pos_indices], general_y[neg_indices]))
   return general_x, general_y
 
 sem_x_train, sem_y_train = get_semantic_noise_generation_train_data(limit=1500)
 
-print("sem_x_len:%s"%str(len(sem_x_train)))
-print("sem_y_len:%s"%str(len(sem_y_train)))
-print("sem_pos_len:%s"%str(len(np.where(sem_y_train==1.0)[0])))
 print("sem_neg_len:%s"%str(len(np.where(sem_y_train!=1.0)[0])))
+print("sem_pos_len:%s"%str(len(np.where(sem_y_train==1.0)[0])))
 print("-----------------------------------------------")
 
 exit()
