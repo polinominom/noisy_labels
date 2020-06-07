@@ -162,20 +162,22 @@ epochs = 200
 # set batch
 b=64
 
+# convert binary to categorical
+sem_y_train = tf.keras.utils.to_categorical(sem_y_train, num_classes=2)
 # train and save results of densenet121
-callbacks = [tf.keras.callbacks.EarlyStopping(), tf.keras.callbacks.ModelCheckpoint(filepath='./models/densenet', save_best_only=False), CSVLogger("./history/densenet.csv", append=True)] 
+callbacks = [tf.keras.callbacks.ModelCheckpoint(filepath='./models/densenet', save_best_only=False), CSVLogger("./history/densenet.csv", append=True)] 
 history1 = m.fit(sem_x_train, sem_y_train, epochs = epochs, batch_size = b, verbose=1, validation_split=0.8, callbacks=callbacks)
 save_history(history1.history, "./history/history1.json")
 save_model(m1, "./models/m1")
 
 # train and save results of resnet50
-callbacks = [tf.keras.callbacks.EarlyStopping(), tf.keras.callbacks.ModelCheckpoint(filepath='./models/resnet', save_best_only=False), CSVLogger("./history/resnet.csv", append=True)]
+callbacks = [tf.keras.callbacks.ModelCheckpoint(filepath='./models/resnet', save_best_only=False), CSVLogger("./history/resnet.csv", append=True)]
 history2 = m2.fit(sem_x_train, sem_y_train, epochs = epochs, batch_size = b, verbose=1, validation_split=0.8, callbacks=callbacks)
 save_history(history2.history, "./history/history2.json")
 save_model(m2, "./models/m2")
 
 # train and save results of vgg16
-callbacks = [tf.keras.callbacks.EarlyStopping(), tf.keras.callbacks.ModelCheckpoint(filepath='./models/vgg', save_best_only=False), CSVLogger("./history/vgg.csv", append=True)]
+callbacks = [tf.keras.callbacks.ModelCheckpoint(filepath='./models/vgg', save_best_only=False), CSVLogger("./history/vgg.csv", append=True)]
 history3 = m3.fit(sem_x_train, sem_y_train, epochs = epochs, batch_size = b, verbose=1, validation_split=0.8, callbacks=callbacks)
 save_history(history3.history, "./history/history3.json")
 save_model(m2, "./models/m3")
