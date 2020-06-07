@@ -20,6 +20,8 @@ def get_confirm_token(response):
     for key, value in response.cookies.items():
         if key.startswith('download_warning'):
             return value
+        else:
+            print("key: %s - value: %s"%(str(key),str(value)))
 
     return None
 
