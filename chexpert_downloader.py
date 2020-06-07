@@ -2,7 +2,7 @@
 import requests
 import os
 import pandas as pd
-from google_drive_downloader import GoogleDriveDownloader as gdd
+#from google_drive_downloader import GoogleDriveDownloader as gdd
 
 def download_file_from_google_drive(id, destination):
     URL = "https://docs.google.com/uc?export=download"
@@ -18,10 +18,9 @@ def download_file_from_google_drive(id, destination):
 
 def get_confirm_token(response):
     for key, value in response.cookies.items():
+        print("key: %s - value: %s"%(str(key),str(value)))
         if key.startswith('download_warning'):
             return value
-        else:
-            print("key: %s - value: %s"%(str(key),str(value)))
 
     return None
 
