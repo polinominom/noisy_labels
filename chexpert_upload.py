@@ -39,20 +39,22 @@ def main():
 
     # Call the Drive v3 API
     file_metadata = {'name': 'sem_train'}
-    media = MediaFileUpload('./semantic_train_data/sem_train', mimetype=None, uploadType="resumable")
-    file = service.files().create(body=file_metadata,
-                                    media_body=media,
-                                    fields='id').execute()
-    
-    print('TRAIN - File ID: %s' % file.get('id'))
+    media = MediaFileUpload('./semantic_train_data/sem_train',  chunksize=1024 * 1024, resumable=True)
+    request = service.files().create(body=file_metadata, media_body=media)
+    response = None
+    while response is None:
+        status, response = request.next_chunk()
+        if status:
+            print("SEM-TRAIN Uploaded %d%%." % int(status.progress() * 100))
 
     file_metadata = {'name': 'sem_labels'}
-    media = MediaFileUpload('./semantic_train_data/sem_labels', mimetype=None, uploadType="resumable")
-    file = service.files().create(body=file_metadata,
-                                        media_body=media,
-                                        fields='id').execute()
-
-    print('LABELS - File ID: %s' % file.get('id'))
+    media = MediaFileUpload('./semantic_train_data/sem_labels',  chunksize=1024 * 1024, resumable=True)
+    request = service.files().create(body=file_metadata, media_body=media)
+    response = None
+    while response is None:
+        status, response = request.next_chunk()
+        if status:
+            print("SEM-LABEL Uploaded %d%%." % int(status.progress() * 100))
 
 if __name__ == '__main__':
     if not os.path.exists('./semantic_train_data'):
