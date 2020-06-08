@@ -1,7 +1,7 @@
 from __future__ import print_function
 import pickle
 import os.path
-from googleapiclient.http import MediaIoBaseDownload
+from googleapiclient.http import MediaIoBaseDownload, MediaFileUpload
 from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
@@ -39,7 +39,7 @@ def main():
 
     # Call the Drive v3 API
     file_metadata = {'name': 'sem_train'}
-    media = MediaFileUpload('./semantic_train_data/sem_train', mimetype='unknown')
+    media = MediaFileUpload('./semantic_train_data/sem_train', mimetype=None, uploadType="resumable")
     file = service.files().create(body=file_metadata,
                                     media_body=media,
                                     fields='id').execute()
@@ -47,7 +47,7 @@ def main():
     print('TRAIN - File ID: %s' % file.get('id'))
 
     file_metadata = {'name': 'sem_labels'}
-    media = MediaFileUpload('./semantic_train_data/sem_labels', mimetype='unknown')
+    media = MediaFileUpload('./semantic_train_data/sem_labels', mimetype=None, uploadType="resumable")
     file = service.files().create(body=file_metadata,
                                         media_body=media,
                                         fields='id').execute()
