@@ -24,11 +24,10 @@ from tensorflow.keras.callbacks import CSVLogger
 
 # MODEL save & load
 def save_model(model, destination):
-  model.savee(destination)
+  model.save(destination)
 
 def load_model(source):
-  tf.keras.models.load_model(source)
-  pass
+  return tf.keras.models.load_model(source)
 
 # JSON save & load
 def get_history(name):
@@ -40,8 +39,7 @@ def save_history(history, name):
 # ndarray save & load
 def unpickle(fname):
     with open(fname, 'rb') as fo:
-        return pickle.load(fo
-                           )
+        return pickle.load(fo)
 def save_ndarray(fname, data):
     with open(fname, 'wb') as fp:
         pickle.dump(data, fp)
@@ -144,6 +142,12 @@ if not os.path.exists("./models"):
 if not  os.path.exists("./semantic_train_data"): 
   os.mkdir("./semantic_train_data")
 
+# Print the GPU availability
+if tf.test.gpu_device_name():
+  print('Default GPU Device:{}'.format(tf.test.gpu_device_name()))
+else:
+  print("Unable to detect any GPU device")
+
 # get semantic train data and their labels from the folder if they exists.
 # otherwise; get the data from the adjusted folder and save it.
 if os.path.exists("./semantic_train_data/sem_train") and os.path.exists("./semantic_train_data/sem_labels"):
@@ -161,7 +165,6 @@ else:
 epochs = 200
 # set batch
 b=64
-
 # convert "nan"s to "0" and binary(1-0) to categorical[1,0] in order to run the models
 sem_y_train[np.where(sem_y_train!=1.0)] = 0.0
 sem_y_train = tf.keras.utils.to_categorical(sem_y_train, num_classes=2)
