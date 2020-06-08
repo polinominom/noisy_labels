@@ -57,5 +57,13 @@ def main():
 if __name__ == '__main__':
     if not os.path.exists('./semantic_train_data'):
         exit()
+    
+    if not os.path.exists('./semantic_train_data/sem_train'):
+        print("Unable to get semantic train data...")
+        exit()
+
+    if not os.path.exists('./semantic_train_data/sem_labels'):
+        print("Unable to get semantic train labels...")
+        exit()
 
     main()
