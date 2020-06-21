@@ -5,3 +5,8 @@ models/
 history/
 semantic_train_data/
 adjusted_data/*
+*.pkl
+*.txt
+extract_semantic_train_indices.py
+semantic_train_indices.csv
+sem_train.ipynb
