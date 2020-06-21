@@ -36,16 +36,23 @@ def get_samples_from_idx_list(lst):
         logs.append('gi:%i computed - ci:%i and comuted - li:%i\n'%(gi,ci,li))
         t_fname = './adjusted_data/adjusted_train_images_%i'%ci
         l_fname = './labels/train_label_%i'%ci
-        t_sample = unpickle(t_fname)[li]
-        t_label  = unpickle(l_fname)[li]
-        samples.append(t_sample)
-        labels.append(t_label)
+        unpickled_samples = unpickle(t_fname)
+        unpickled_labels = unpickle(l_fname) 
+        samples.append(unpickled_samples[li])
+        labels.append(unpickled_labels[li])
+        # TODO: check if this fixes memory issue
+        del us
+        del ul
+        del t_fname
+        del l_name
+        del li
+        del ci
         
 
     with open('./log_file.txt', 'w+') as fp:
         fp.writelines(logs)
         del logs
-
+        
     return [np.array(samples), np.array(labels)]
 
 def find_local_index(gi):
