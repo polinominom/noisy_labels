@@ -41,8 +41,8 @@ def get_samples_from_idx_list(lst):
         samples.append(unpickled_samples[li])
         labels.append(unpickled_labels[li])
         # TODO: check if this fixes memory issue
-        del us
-        del ul
+        del unpickled_samples
+        del unpickled_labels
         del t_fname
         del l_name
         del li
@@ -52,7 +52,7 @@ def get_samples_from_idx_list(lst):
     with open('./log_file.txt', 'w+') as fp:
         fp.writelines(logs)
         del logs
-        
+
     return [np.array(samples), np.array(labels)]
 
 def find_local_index(gi):
