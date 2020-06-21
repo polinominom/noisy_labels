@@ -62,7 +62,10 @@ def find_local_index(gi):
     return gi%1000
 
 def find_chunk_id(gi):
-    return ( (gi//1000) + 1 ) * 1000
+    r = ( (gi//1000) + 1 ) * 1000
+    if r == 224000:
+        r = 223413
+    return r
 # save & load ndarray
 def unpickle(fname):
     with open(fname, 'rb') as fo:
