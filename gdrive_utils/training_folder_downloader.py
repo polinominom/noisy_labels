@@ -109,12 +109,12 @@ def main():
 
     train_items = get_folder_files(service, train_foler_id, 26848)
     val_items   = get_folder_files(service, val_folder_id, 3356)
-    test_items  = get_folder_files(service, test_folder_id, 3356)
+    #test_items  = get_folder_files(service, test_folder_id, 3356)
 
     print('ALL FILES HAVE BEEN FOUND')
     download(service, train_items, 'train', 26848)
-    download(service, val_items, 'train', 3356)
-    download(service, test_items, 'test', 3356)
+    download(service, val_items, 'val', 3356)
+    #download(service, test_items, 'test', 3356)
 
     #request = service.files().get_media(file_id, "application/vnd.google-apps.folder")
     #fh = io.FileIO('../buffer/%s'%str(k), 'wb')
