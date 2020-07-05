@@ -6,9 +6,13 @@ history/
 semantic_train_data/
 adjusted_data/*
 second_buffer/
+noisy_data/
+.vscode/
+__pycache__/
 ######FILES
 *.pkl
 *.txt
+*.h5
 extract_semantic_train_indices.py
 semantic_train_indices.csv
 sem_train.ipynb
@@ -20,5 +24,5 @@ test
 tf_chexpert_loader.py
 concatenate_val.py
 filepaths.json
-noisy_data/
-.vscode/
+h5_coverter.py
+to_be_removed.py
