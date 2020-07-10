@@ -26,7 +26,6 @@ semantic_buffer_filler.py
 semantic_buffer_merger.py
 semantic_buffer_samples/
 test
-tf_chexpert_loader.py
 concatenate_val.py
 filepaths.json
 h5_coverter.py
