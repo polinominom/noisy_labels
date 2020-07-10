@@ -8,7 +8,12 @@ second_buffer/
 noisy_data/
 .vscode/
 __pycache__/
-buffer/
+!/buffer
+!/buffer/fill_forwardt.py
+!/buffer/baseline
+/buffer/baseline/*
+!/buffer/forwardt
+/buffer/forwardt/*
 ######FILES
 *.pkl
 *.txt
