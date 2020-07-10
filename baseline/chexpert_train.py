@@ -1,4 +1,7 @@
 import os
+import sys
+sys.path.append('baseline')
+
 import time
 import json
 import pickle
