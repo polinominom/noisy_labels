@@ -22,6 +22,9 @@ from tf_chexpert_callbacks import EarlyStoppingAtMinLoss, PredictionSaveCallback
 from tf_chexpert_utilities import *
 import densenet
 
+def fpath(folder, noise):
+    return '%s/n_%s'%(folder, str(noise))
+
 """## model compile func"""
 def compile_model(model, binary=False):
   # Instantiate a logistic loss function that expects integer targets.
@@ -75,7 +78,7 @@ for n in noises:
 """## SOME TRAINING PARAMATERS"""
 # get custom datasets for network training
 BATCH_SIZE = 32
-EPOCHS = 1000 # will be early stopped so it is ok
+EPOCHS = 150 
 
 # GET SHUFFLED NAMES/LABES FOR TRAIN
 train_s_fnames      = sample_train_fnames[train_shuffled_idx_lst]
@@ -97,28 +100,30 @@ make_sure_folder_exists(network_training_pred_folder)
 make_sure_folder_exists(prediction_save_folder)
 make_sure_folder_exists(model_dir)
 make_sure_folder_exists(model_save_dir)
+make_sure_folder_exists('%s/%s'%(prediction_save_folder, '00'))
 for n in noises:
-    make_sure_folder_exists('%s/%s'%(prediction_save_folder, int(n*100)))
-
-# These callback initializations shouldn't give any errors.
-tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=tensorboard_log_dir)
-es  = EarlyStoppingAtMinLoss(model_save_dir=model_save_dir, patience=15)
-callbacks = [es, tensorboard_callback]
+    make_sure_folder_exists('%s/%i'%(prediction_save_folder, int(n*100)))
 
 opt = get_args()
+
 if opt.noise_ratio == 0.0:
     train_loader    = ChexpertLoader(train_s_fnames, train_ground_truth, BATCH_SIZE)
     val_loader      = ChexpertLoader(val_s_fnames, val_ground_truth, BATCH_SIZE)
-    callbacks = [es, tensorboard_callback]
 else:
     train_loader    = ChexpertLoader(train_s_fnames, train_noisy_label_dict[opt.noise_ratio], BATCH_SIZE)
     val_loader      = ChexpertLoader(val_s_fnames, val_noisy_label_dict[opt.noise_ratio], BATCH_SIZE)
-    # add prediction saver to callbacks
-    pcs = PredictionSaveCallback(train_loader, val_loader, prediction_save_folder='%s/%i'%(prediction_save_folder, int(100*opt.noise_ratio)))
-    callbacks = [pcs, es, tensorboard_callback]
+
+# These callback initializations shouldn't give any errors.
+monitor = 'val_loss'
+mc_callback = ModelCheckpoint(fpath(model_save_dir, int(100*opt.noise_ratio)), monitor=monitor, verbose=1, save_best_only=True)
+pcs = PredictionSaveCallback(train_loader, val_loader, prediction_save_folder='%s/%i'%(prediction_save_folder, int(100*opt.noise_ratio)))  
+tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=tensorboard_log_dir)
+callbacks = [pcs, tensorboard_callback, mc_callback]
 
 """## TRAINING"""
-print('- everything works ')
+print('best model weights will be saved at: %s'%str(fpath(model_save_dir, int(100*opt.noise_ratio))))
+print('******************** TRAINING STARTED n:%s ********************'%str(opt.noise_ratio))
+# print('EVERYTHING WORKS')
 exit()
 model = get_densenet()
 model = compile_model(model, binary=True)
