@@ -93,11 +93,28 @@ def get_fnames(sample_folder):
   sample_train_folder = '%s/%s'%(sample_folder, 'train')
   sample_val_folder   = '%s/%s'%(sample_folder, 'val')
   sample_test_folder  = '%s/%s'%(sample_folder, 'test')
-
+  # Get relative file names
   train_dir = os.listdir(sample_train_folder)
   val_dir = os.listdir(sample_val_folder)
   test_dir = os.listdir(sample_test_folder)
-  
+  # remove macOS related unwanted files if they exist
+  try:
+    train_dir.remove('.DS_Store')
+  except: 
+    pass
+  try:
+    val_dir.remove('.DS_Store')
+  except:
+    pass
+  try:
+    test_dir.remove('.DS_Store')
+  except:
+    pass
+  # sort
+  train_dir = sorted(train_dir)
+  val_dir = sorted(val_dir)
+  test_dir = sorted(test_dir)
+  # get full paths
   train_f = np.array(list(map(lambda x: "%s/%s"%(sample_train_folder, x), train_dir)))
   val_f = np.array(list(map(lambda x: "%s/%s"%(sample_val_folder, x), val_dir)))
   test_f = np.array(list(map(lambda x: "%s/%s"%(sample_test_folder, x), test_dir)))

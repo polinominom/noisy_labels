@@ -17,17 +17,7 @@ from tensorflow.keras.callbacks import CSVLogger
 from tf_chexpert_loader import ChexpertLoader
 from tf_chexpert_callbacks import EarlyStoppingAtMinLoss, PredictionSaveCallback
 from tf_chexpert_utilities import *
-
-"""# Model Implementations
-## Densenet
-"""
-from tensorflow.keras.applications.densenet import DenseNet121
-def get_densenet():
-  return DenseNet121(include_top=True, 
-                      weights=None,
-                      input_shape=(256, 256, 3), 
-                      classes=2)
-
+import densenet
 
 """## model compile func"""
 def compile_model(model, binary=False):
@@ -47,7 +37,7 @@ def compile_model(model, binary=False):
   return model
 
 """## GET SAMPLE FILENAMES"""
-sample_train_fnames, sample_val_fnames, sample_test_fnames = get_fnames('./buffer')
+sample_train_fnames, sample_val_fnames, sample_test_fnames = get_fnames('./buffer/baseline')
 
 """## SHUFFLING INDICES"""
 # SHUFFLE TRAIN INDICES
@@ -121,13 +111,15 @@ else:
     train_loader    = ChexpertLoader(train_s_fnames, train_noisy_label_dict[opt.noise_ratio], BATCH_SIZE)
     val_loader      = ChexpertLoader(val_s_fnames, val_noisy_label_dict[opt.noise_ratio], BATCH_SIZE)
     # add prediction saver to callbacks
-    pcs = PredictionSaveCallback(train_loader, val_loader, prediction_save_folder='./network_training_predictions/densenet121_baseline/%i'%int(100*opt.noise_ratio))
+    pcs = PredictionSaveCallback(train_loader, val_loader, prediction_save_folder='%s/%i'%(prediction_save_folder, int(100*opt.noise_ratio)))
     callbacks = [pcs, es, tensorboard_callback]
 
 """## TRAINING"""
-print('everything works?')
+print('- everything works ')
 exit()
 model = get_densenet()
-compile_model(model, binary=True)
+model = compile_model(model, binary=True)
 history = model.fit(train_loader, validation_data=val_loader, epochs=EPOCHS, batch_size=BATCH_SIZE, verbose=1, callbacks=callbacks)
-json.dump(history, './hstory/%s_densenet121_%s.json'%(str(opt.noise_ratio),str(get_time_ms)))
+
+current_time_ms = lambda: int(round(time.time() * 1000))
+json.dump(history.history, './history/%s_densenet121_%s.json'%(str(opt.noise_ratio),str(current_time_ms)))
