@@ -126,8 +126,9 @@ print('best model weights will be saved at: %s'%str(fpath(model_save_dir, int(10
 print('************************ TRAINING STARTED n:%s ************************'%str(opt.noise_ratio))
 # print('EVERYTHING WORKS')
 # exit()
-model = get_densenet()
+model = densenet.get_densenet()
 model = compile_model(model, binary=True)
+
 history = model.fit(train_loader, validation_data=val_loader, epochs=EPOCHS, batch_size=BATCH_SIZE, verbose=1, callbacks=callbacks)
 
 current_time_ms = lambda: int(round(time.time() * 1000))
