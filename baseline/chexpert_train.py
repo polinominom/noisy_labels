@@ -129,7 +129,7 @@ print('************************ TRAINING STARTED n:%s ************************'%
 model = densenet.get_densenet()
 model = compile_model(model, binary=True)
 
-history = model.fit(train_loader, validation_data=val_loader, epochs=EPOCHS, batch_size=BATCH_SIZE, verbose=1, callbacks=callbacks)
+history = model.fit(train_loader, validation_data=val_loader, epochs=EPOCHS, verbose=1, callbacks=callbacks)
 
 current_time_ms = lambda: int(round(time.time() * 1000))
 json.dump(history.history, './history/%s_densenet121_%s.json'%(str(opt.noise_ratio),str(current_time_ms)))

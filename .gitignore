@@ -8,6 +8,7 @@ second_buffer/
 noisy_data/
 .vscode/
 __pycache__/
+tensorboard_logs/
 !/buffer
 !/buffer/fill_forwardt.py
 !/buffer/baseline
