@@ -23,6 +23,12 @@ from tf_chexpert_callbacks import EarlyStoppingAtMinLoss, PredictionSaveCallback
 from tf_chexpert_utilities import *
 import densenet
 
+print('adjust settings to prevent gpu freeze...')
+configproto = tf.compat.v1.ConfigProto() 
+configproto.gpu_options.allow_growth = True
+sess = tf.compat.v1.Session(config=configproto) 
+tf.compat.v1.keras.backend.set_session(sess)
+
 def fpath(folder, noise):
     return '%s/n_%s'%(folder, str(noise))
 
@@ -128,6 +134,10 @@ print('************************ TRAINING STARTED n:%s ************************'%
 # exit()
 model = densenet.get_densenet()
 model = compile_model(model, binary=True)
+if opt.continue_training == 1:
+  checkpoint_path = fpath(model_save_dir, int(100*opt.noise_ratio))
+  print('continue training from checkpoint...')
+  model.load_weights(f'{checkpoint_path}/variables/variables')
 
 history = model.fit(train_loader, validation_data=val_loader, epochs=EPOCHS, verbose=1, callbacks=callbacks)
 

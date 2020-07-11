@@ -15,10 +15,11 @@ from tensorflow.keras.callbacks import CSVLogger
 import argparse
 
 def get_args():
-	parser = argparse.ArgumentParser()
-	parser.add_argument('--noise_ratio', type=float, default=0.0, help='noise ratio')
-	opt = parser.parse_args() 
-	return opt
+  parser = argparse.ArgumentParser()
+  parser.add_argument('--noise_ratio', type=float, default=0.0, help='noise ratio')
+  parser.add_argument('--continue_training', type=int, default=0, help='Continue training')
+  opt = parser.parse_args() 
+  return opt
 
 def make_sure_folder_exists(folder_name):
     if not os.path.exists(folder_name):
