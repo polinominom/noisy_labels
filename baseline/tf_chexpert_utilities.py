@@ -14,10 +14,23 @@ from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras.callbacks import CSVLogger
 import argparse
 
+def print_remaining_time(before, currentPosition, totalSize):
+  after = datetime.datetime.now()
+  elaspsed_time = (after - before).seconds
+  estimated_remaining_time = elaspsed_time * (totalSize - currentPosition) / currentPosition
+  
+  msg = '%i/%i(%.2f%s) finished. Estimated Remaining Time: %.2f seconds.'%(currentPosition, totalSize, (100*currentPosition/totalSize), '%' ,estimated_remaining_time)
+  print(msg)
+
 def get_args():
   parser = argparse.ArgumentParser()
   parser.add_argument('--noise_ratio', type=float, default=0.0, help='noise ratio')
-  parser.add_argument('--continue_training', type=int, default=0, help='Continue training')
+  parser.add_argument('--resume', type=int, default=0, help='Continue training')
+  parser.add_argument('--batch_size', type=int, default=16, help='Batch size for the training, validation and test...')
+  parser.add_argument('--max_epoch', type=int, default=150, help='MAXIMUM EPOH')
+  parser.add_argument('--lr', type=float, default=0.02, help='learning rate')
+  parser.add_argument('--momentum', type=float, default=0.9, help='Momentum')
+  parser.add_argument('--weight_decay', type=float, default=1e-4, help='Weight decay')
   opt = parser.parse_args() 
   return opt
 
