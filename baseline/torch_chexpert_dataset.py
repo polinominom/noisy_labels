@@ -20,7 +20,7 @@ class ChexpertDataset(Dataset):
     img = Image.fromarray(x)
     img = self.transform(img)
     target = self.noisy_labels[index]
-    return img, target, self.ground_truth, index
+    return img, target, self.ground_truth[index], index
            
   def __len__(self):
     return len(self.fnames)

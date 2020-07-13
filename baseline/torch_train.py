@@ -176,24 +176,43 @@ for n in noises:
     make_sure_folder_exists('%s/%i'%(prediction_save_folder, int(n*100)))
 
 # get args
+# # # # if you are using a notebook comment the code below and uncomment the ' NOETBOOK MODE ' code block# # # #
 opt = get_args()
-#open h5py file to save the epoch states
-logger = initialize_logger('%s/%i/log.hdf5'%(prediction_save_folder, int(100*opt.noise_ratio)))
+
 BATCH_SIZE = opt.batch_size
 MAX_EPOCHS = opt.max_epoch
-# Get mean to initialize transform
-# trainset = ChexpertDataset(r=opt.noise_ratio, fnames=train_s_fnames, noisy_labels=train_noisy_label_dict[opt.noise_ratio], batch_size=BATCH_SIZE, ground_truth=train_ground_truth, transform=transforms.ToTensor())
-# trainloader = torch.utils.data.DataLoader(trainset, batch_size=BATCH_SIZE, shuffle=False, num_workers=4)
-# mean = 0
-# before = datetime.datetime.now()    
-# for i, data in enumerate(trainloader, 0):
-#     imgs, labels, real_labels, index= data
-#     mean += torch.from_numpy(np.mean(np.asarray(imgs), axis=(2,3))).sum(0)
-#     if (i+1)%15 == 0:
-#         print_remaining_time(before, i+1, len(trainloader))
-# mean = mean / len(trainset)
+NOISE_RATIO = opt.noise_ratio
 
-mean = [0.5, 0.5, 0.5]
+LR = opt.lr
+MOMENTUM = opt.momentum
+WEIGHT_DECAY = opt.weight_decay
+RESUME = opt.resume
+skip_mean = False
+# # # # NOTEBOOK MODE # # # #
+# BATCH_SIZE = 16
+# MAX_EPOCHS = 150
+# NOISE_RATIO = 0
+# LR = 0.02
+# MOMENTUM = 0.9
+# WEIGHT_DECAY = 1e-4
+# RESUME = 0
+# skip_mean = True
+# open h5py file to save the epoch states
+logger = initialize_logger('%s/%i/log.hdf5'%(prediction_save_folder, int(100*NOISE_RATIO)))
+if not skip_mean:
+  # Get mean to initialize transform
+  trainset = ChexpertDataset(r=NOISE_RATIO, fnames=train_s_fnames, noisy_labels=train_noisy_label_dict[NOISE_RATIO], batch_size=BATCH_SIZE, ground_truth=train_ground_truth, transform=transforms.ToTensor())
+  trainloader = torch.utils.data.DataLoader(trainset, batch_size=BATCH_SIZE, shuffle=False, num_workers=4)
+  mean = 0
+  before = datetime.datetime.now()    
+  for i, data in enumerate(trainloader, 0):
+      imgs, labels, real_labels, index= data
+      mean += torch.from_numpy(np.mean(np.asarray(imgs), axis=(2,3))).sum(0)
+      if (i+1)%15 == 0:
+          print_remaining_time(before, i+1, len(trainloader))
+  mean = mean / len(trainset)
+else:
+  mean = [0.5, 0.5, 0.5]
 # get transform and initialize trainset and trainloader
 transform_train = transforms.Compose([transforms.Resize(256),
                                       transforms.RandomCrop(256, padding=4), 
@@ -205,10 +224,10 @@ transform_test = transforms.Compose([transforms.Resize(256),
                                      transforms.ToTensor(),
                                      transforms.Normalize((mean[0], mean[1], mean[2]), (1.0, 1.0, 1.0))])
 
-trainset = ChexpertDataset(r=opt.noise_ratio, fnames=train_s_fnames, noisy_labels=train_noisy_label_dict[opt.noise_ratio], batch_size=BATCH_SIZE, ground_truth=train_ground_truth, transform=transform_train)
+trainset = ChexpertDataset(r=NOISE_RATIO, fnames=train_s_fnames, noisy_labels=train_noisy_label_dict[NOISE_RATIO], batch_size=BATCH_SIZE, ground_truth=train_ground_truth, transform=transform_train)
 trainloader = DataLoader(trainset, batch_size=BATCH_SIZE, shuffle=True, num_workers=4)
 
-valset = ChexpertDataset(r=opt.noise_ratio, fnames=val_s_fnames, noisy_labels=val_noisy_label_dict[opt.noise_ratio], batch_size=BATCH_SIZE, ground_truth=val_ground_truth, transform=transform_test)
+valset = ChexpertDataset(r=NOISE_RATIO, fnames=val_s_fnames, noisy_labels=val_noisy_label_dict[NOISE_RATIO], batch_size=BATCH_SIZE, ground_truth=val_ground_truth, transform=transform_test)
 valloader = DataLoader(valset, batch_size=BATCH_SIZE, shuffle=False, num_workers=4)
 
 print(f'train loader length: {len(trainloader)}')
@@ -224,165 +243,168 @@ criterion = nn.CrossEntropyLoss()
 
 net.cuda()
 criterion.cuda()
-optimizer = optim.SGD(net.parameters(), lr=opt.lr, momentum=opt.momentum, weight_decay=opt.weight_decay)
+optimizer = optim.SGD(net.parameters(), lr=LR, momentum=MOMENTUM, weight_decay=WEIGHT_DECAY)
 
 num_classes = 2
 train_preds = torch.zeros(len(trainset), num_classes) - 1.
 val_preds = torch.zeros(len(valset), num_classes) - 1.
 
-if opt.resume == 1:
-    fn = os.path.join(model_save_dir, 'checkpoint.pth.tar')
-    ckpt = torch.load(fn)
-    epoch_resume = ckpt['epoch']
-    best_val_acc = ckpt['best_val_acc']
-    net.load_state_dict(ckpt['state_dict'])
-    optimizer.load_state_dict(ckpt['optimizer'])
-    logger.info('loading network SUCCESSFUL')
-else:
-    epoch_resume = 0
-    best_val_acc = 0
-    logger.info('loading network FAILURE')
 
-exit()
+
+if RESUME == 1:
+  fn = os.path.join(model_save_dir, 'checkpoint.pth.tar')
+  ckpt = torch.load(fn)
+  epoch_resume = ckpt['epoch']
+  best_val_acc = ckpt['best_val_acc']
+  net.load_state_dict(ckpt['state_dict'])
+  optimizer.load_state_dict(ckpt['optimizer'])
+  print('loading network SUCCESSFUL')
+else:
+  epoch_resume = 0
+  best_val_acc = 0
+  print('loading network FAILURE')
+
 # TRAINING
 for epoch in range(epoch_resume, MAX_EPOCHS):
-    train_loss = 0
-    train_acc = 0
-    train_real_loss = 0
-    train_real_acc = 0
-    recall = 0
-    precision = 0
-    _f1Score = 0
-    for i, data in enumerate(trainloader, 0):
-        net.zero_grad()
-        imgs, labels, real_ground_truths, index = data 
+  before = datetime.datetime.now()
+  train_loss = 0
+  train_acc = 0
+  train_real_loss = 0
+  train_real_acc = 0
+  recall = 0
+  precision = 0
+  _f1Score = 0
+  for i, data in enumerate(trainloader, 0):
+    net.zero_grad()
+    imgs, labels, real_ground_truths, index = data 
         # imgs               : data
         # labels             : noisy labels
         # real ground truths : not-noisy ground truths
         # index              : sample index
-        imgs = Variable(imgs.cuda())
-        labels = Variable(labels.cuda())
-        real_ground_truths = Variable(real_ground_truths.cuda())
+    imgs = Variable(imgs.cuda().float())
+    labels = Variable(labels.cuda().long()[:,1])
+    real_ground_truths = Variable(real_ground_truths.cuda().long())
         # forward
-        logits = net(imgs)
+    logits = net(imgs.float())
         # get the accuracy and predictions of the current batch
-        _, pred = torch.max(logits.data, -1)
-        acc = float((pred==labels.data).sum()) 
-        train_acc += acc
-        train_real_acc += float((pred==real_ground_truths.data).sum()) 
+    _, pred = torch.max(logits.data, -1)
+    acc = float((pred==labels.data).sum()) 
+    train_acc += acc
+    train_real_acc += float((pred==real_ground_truths.data[:,1]).sum()) 
         # get current loss of the batch
-        current_loss = criterion(logits, labels)
-        train_loss += imgs.size(0) * current_loss.data    
-        train_real_loss += imgs.size(0) * criterion(logits, real_ground_truths).data
+    current_loss = criterion(logits, labels)
+    train_loss += imgs.size(0) * current_loss.data    
+    train_real_loss += imgs.size(0) * criterion(logits, real_ground_truths[:,1]).data
         # backward
-        current_loss.backward()
-        optimizer.step()
+    current_loss.backward()
+    optimizer.step()
         # put prediction history in a list to save it later
-        softmax_pred        = F.softmax(logits, -1).cpu().data
-        train_preds[index.cpu()] = softmax_pred
+    softmax_pred        = F.softmax(logits, -1).cpu().data
+    train_preds[index.cpu()] = softmax_pred
         # put the metrics that COMPARES THE REAL GROUND TRUTHS
-        recall    += imgs.size(0) * recall_score(real_ground_truths.cpu(), softmax_pred.cpu() > 0.5,    average="samples")
-        precision += imgs.size(0) * precision_score(real_ground_truths.cpu(), softmax_pred.cpu() > 0.5, average="samples")
-        _f1Score  += imgs.size(0) * f1_score(real_ground_truths.cpu(), softmax_pred.cpu() > 0.5,        average="samples")
+    recall    += imgs.size(0) * recall_score(real_ground_truths.cpu(), softmax_pred.cpu() > 0.5,    average="samples")
+    precision += imgs.size(0) * precision_score(real_ground_truths.cpu(), softmax_pred.cpu() > 0.5, average="samples")
+    _f1Score  += imgs.size(0) * f1_score(real_ground_truths.cpu(), softmax_pred.cpu() > 0.5,        average="samples")
+    if (i+1)%100==0:
+      print_remaining_time(before, i+1, len(trainloader))
         
-    # get avarage loss and accuracy
-    train_loss  /= len(trainset)
-    train_acc   /= len(trainset)
-    recall      /= len(trainset)
-    precision   /= len(trainset)
-    _f1Score    /= len(trainset)
-    train_real_loss /= len(trainset)
-    train_real_acc  /= len(trainset)
-    # HANLE LOGS
-    log_metrics(
-        logger, 
-        KEY='TRAIN', 
-        EPOCH=epoch, 
-        softmax_pred=train_preds, 
-        loss=train_loss,
-        real_loss=train_real_loss,
-        acc=train_acc,
-        real_acc=train_real_acc,
-        recall=recall,
-        precision=precision,
-        _f1Score = _f1Score)
+  # get avarage loss and accuracy
+  train_loss  /= len(trainset)
+  train_acc   /= len(trainset)
+  recall      /= len(trainset)
+  precision   /= len(trainset)
+  _f1Score    /= len(trainset)
+  train_real_loss /= len(trainset)
+  train_real_acc  /= len(trainset)
+  # HANLE LOGS
+  log_metrics(
+    logger, 
+    KEY='TRAIN', 
+    EPOCH=epoch, 
+    softmax_pred=train_preds, 
+    loss=train_loss.cpu(),
+    real_loss=train_real_loss.cpu(),
+    acc=train_acc,
+    real_acc=train_real_acc,
+    recall=recall,
+    precision=precision,
+    _f1Score = _f1Score)
 
-    print('[%6d/%6d] loss: %5f, real_loss: %5f, acc: %5f, real_acc:%5f, recall: %5f, precision: %5f, f1_score: %5f' %(epoch, MAX_EPOCHS, train_loss, train_real_loss, train_acc, train_real_acc, recall, precision, _f1Score))
+  print('[%6d/%6d] loss: %5f, real_loss: %5f, acc: %5f, real_acc:%5f, recall: %5f, precision: %5f, f1_score: %5f' %(epoch, MAX_EPOCHS, train_loss, train_real_loss, train_acc, train_real_acc, recall, precision, _f1Score))
     # reset the placeholder for the predictions in the next epoch 
-    train_preds = train_preds*0 - 1.
+  train_preds = train_preds*0 - 1.
     # VALIDATION STATE
-    net.eval()
-    val_loss = 0.0
-    val_real_loss = 0.0
-    val_acc = 0.0
-    val_real_acc = 0.0
-    val_prec = 0
-    val_f1_score = 0
-    val_recall = 0
-    
-    with torch.no_grad():
-        for i, data in enumerate(valloader, 0):
-            imgs, labels, real_ground_truths, index = data
-            imgs = Variable(imgs.cuda())
-            labels = Variable(labels.cuda())
+  net.eval()
+  val_loss = 0.0
+  val_real_loss = 0.0
+  val_acc = 0.0
+  val_real_acc = 0.0
+  val_prec = 0
+  val_f1_score = 0
+  val_recall = 0
+  before = datetime.datetime.now()
+  with torch.no_grad():
+    for i, data in enumerate(valloader, 0):
+      imgs, labels, real_ground_truths, index = data
+      imgs = Variable(imgs.cuda())
+      labels = Variable(labels.cuda().long()[:,1])
+      real_ground_truths = Variable(real_ground_truths.cuda().long())
             # LOSS and REAL LOSS
-            logits = net(imgs)
-            loss = criterion(logits, labels)
-            val_loss += imgs.size(0)*loss.data
-            val_real_loss += imgs.size(0) * criterion(logits, real_ground_truths).data
+      logits = net(imgs.float())
+      loss = criterion(logits, labels)
+      val_loss += imgs.size(0)*loss.data
+      val_real_loss += imgs.size(0) * criterion(logits, real_ground_truths[:,1]).data
             # ACC and REAL ACC
-            _, pred = torch.max(logits.data, -1)
-            acc = float((pred==labels.data).sum())
-            val_acc += acc
-            val_real_acc += float((pred==real_ground_truths.data).sum()) 
+      _, pred = torch.max(logits.data, -1)
+      acc = float((pred==labels.data).sum())
+      val_acc += acc
+      val_real_acc += float((pred==real_ground_truths.data[:,1]).sum()) 
             # put prediction history in a list to save it later
-            softmax_pred            = F.softmax(logits, -1).cpu().data
-            val_preds[index.cpu()]  = softmax_pred
+      softmax_pred            = F.softmax(logits, -1).cpu().data
+      val_preds[index.cpu()]  = softmax_pred
             # put the metrics that COMPARES THE REAL GROUND TRUTHS
-            val_recall    += imgs.size(0) * recall_score(real_ground_truths.cpu(), softmax_pred.cpu() > 0.5,    average="samples")
-            val_prec      += imgs.size(0) * precision_score(real_ground_truths.cpu(), softmax_pred.cpu() > 0.5, average="samples")
-            val_f1_score  += imgs.size(0) * f1_score(real_ground_truths.cpu(), softmax_pred.cpu() > 0.5,        average="samples")
+      val_recall    += imgs.size(0) * recall_score(real_ground_truths.cpu(), softmax_pred.cpu() > 0.5,    average="samples")
+      val_prec      += imgs.size(0) * precision_score(real_ground_truths.cpu(), softmax_pred.cpu() > 0.5, average="samples")
+      val_f1_score  += imgs.size(0) * f1_score(real_ground_truths.cpu(), softmax_pred.cpu() > 0.5,        average="samples")
+      if (i+1)%15 == 0:
+        print_remaining_time(before, i+1, len(trainloader))
 
-    val_loss /= len(valset)
-    val_acc  /= len(valset)
+  val_loss /= len(valset)
+  val_acc  /= len(valset)
     ####################################################
     # log the validation
-    log_metrics(
-        logger, 
-        KEY='VAL', 
-        EPOCH=epoch, 
-        softmax_pred=val_preds, 
-        loss=val_loss,
-        real_loss=val_real_loss,
-        acc=train_acc,
-        real_acc=val_real_acc,
-        recall=val_recall,
-        precision=val_prec,
-        _f1Score=val_f1_score)
+  log_metrics(
+    logger, 
+    KEY='VAL', 
+    EPOCH=epoch, 
+    softmax_pred=val_preds, 
+    loss=val_loss.cpu(),
+    real_loss=val_real_loss.cpu(),
+    acc=val_acc,
+    real_acc=val_real_acc,
+    recall=val_recall,
+    precision=val_prec,
+    _f1Score=val_f1_score)
+  ####################################################
+  print('\tVALIDATION...loss: %5f, acc: %5f, best_acc: %5f, real_acc: %5f, real_loss: %5f, recall: %5f, precision: %5f f1_score: %5f'%(val_loss, val_acc, best_val_acc, val_real_acc, val_real_loss, val_recall, val_prec, val_f1_score))
     ####################################################
-    print('\tVALIDATION...loss: %5f, acc: %5f, best_acc: %5f, real_acc: %5f, real_loss: %5f, recall: %5f, precision: %5f f1_score: %5f'%(val_loss, val_acc, best_val_acc, val_real_acc, val_real_loss, val_recall, val_precision, val_f1_score))
+  net.train()
     ####################################################
-    net.train()
-    ####################################################
-    val_preds = val_preds * 0 - 1.
+  val_preds = val_preds * 0 - 1.
 
-    best_val_acc = max(val_acc, best_val_acc)
-    is_best = val_acc > best_val_acc
+  best_val_acc = max(val_acc, best_val_acc)
+  is_best = val_acc > best_val_acc
 
-    state = ({
-        'epoch' : epoch,
-        'state_dict' : net.state_dict(),
-		'optimizer' : optimizer.state_dict(),
-        'best_val_acc' : best_val_acc})
+  state = ({'epoch' : epoch,'state_dict' : net.state_dict(),'optimizer' : optimizer.state_dict(),'best_val_acc' : best_val_acc})
 
-    fn = os.path.join(model_save_dir, 'checkpoint.pth.tar')
-    best_fn = os.path.join(model_save_dir, 'best_val_checkpoint.pth.tar')
-    print('saving model...')
-    torch.save(state, fn)
-    # save state of the best validation    
-    if is_best:
-        print('saving best val acc model...')
-        torch.save(state, best_fn)
+  fn = os.path.join(model_save_dir, 'checkpoint.pth.tar')
+  best_fn = os.path.join(model_save_dir, 'best_val_checkpoint.pth.tar')
+  print('saving model...')
+  torch.save(state, fn)
+  # save state of the best validation    
+  if is_best:
+    print('saving best val acc model...')
+    torch.save(state, best_fn)
 
 
 
