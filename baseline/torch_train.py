@@ -33,13 +33,6 @@ from torch_chexpert_dataset import ChexpertDataset
 #import ssl
 #ssl._create_default_https_context = ssl._create_unverified_context
 
-
-print('adjust settings to prevent gpu freeze...')
-configproto = tf.compat.v1.ConfigProto() 
-configproto.gpu_options.allow_growth = True
-sess = tf.compat.v1.Session(config=configproto) 
-tf.compat.v1.keras.backend.set_session(sess)
-
 def fpath(folder, noise):
     return '%s/n_%s'%(folder, str(noise))
 
