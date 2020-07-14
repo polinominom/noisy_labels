@@ -187,7 +187,7 @@ logger = initialize_logger('%s/%i/log.hdf5'%(prediction_save_folder, int(100*NOI
 if not skip_mean:
   # Get mean to initialize transform
   trainset = ChexpertDataset(r=NOISE_RATIO, fnames=train_s_fnames, noisy_labels=train_noisy_label_dict[NOISE_RATIO], batch_size=BATCH_SIZE, ground_truth=train_ground_truth, transform=transforms.ToTensor())
-  trainloader = torch.utils.data.DataLoader(trainset, batch_size=BATCH_SIZE, shuffle=False, num_workers=4)
+  trainloader = torch.utils.data.DataLoader(trainset, batch_size=BATCH_SIZE, shuffle=False, num_workers=0)
   mean = 0
   before = datetime.datetime.now()    
   for i, data in enumerate(trainloader, 0):
@@ -210,10 +210,10 @@ transform_test = transforms.Compose([transforms.Resize(256),
                                      transforms.Normalize((mean[0], mean[1], mean[2]), (1.0, 1.0, 1.0))])
 
 trainset = ChexpertDataset(r=NOISE_RATIO, fnames=train_s_fnames, noisy_labels=train_noisy_label_dict[NOISE_RATIO], batch_size=BATCH_SIZE, ground_truth=train_ground_truth, transform=transform_train)
-trainloader = DataLoader(trainset, batch_size=BATCH_SIZE, shuffle=True, num_workers=4)
+trainloader = DataLoader(trainset, batch_size=BATCH_SIZE, shuffle=True, num_workers=0)
 
 valset = ChexpertDataset(r=NOISE_RATIO, fnames=val_s_fnames, noisy_labels=val_noisy_label_dict[NOISE_RATIO], batch_size=BATCH_SIZE, ground_truth=val_ground_truth, transform=transform_test)
-valloader = DataLoader(valset, batch_size=BATCH_SIZE, shuffle=False, num_workers=4)
+valloader = DataLoader(valset, batch_size=BATCH_SIZE, shuffle=False, num_workers=0)
 
 print(f'train loader length: {len(trainloader)}')
 print(f'val loader length: {len(valloader)}')
