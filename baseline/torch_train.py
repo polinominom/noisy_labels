@@ -8,14 +8,8 @@ import datetime
 import threading
 import numpy as np
 import pandas as pd
-import tensorflow as tf
 import matplotlib.pyplot as plt
 from PIL import Image
-from tensorflow.keras.callbacks import ModelCheckpoint
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense, Conv2D, MaxPool2D , Flatten
-from tensorflow.keras.preprocessing.image import ImageDataGenerator
-from tensorflow.keras.callbacks import CSVLogger
 #torch imports
 import torch
 torch.set_printoptions(profile="full")
@@ -33,8 +27,6 @@ from torch.utils.data import Dataset, DataLoader
 from sklearn.metrics import recall_score, precision_score, f1_score
 # some local files
 sys.path.append('baseline')
-from tf_chexpert_loader import ChexpertLoader
-from tf_chexpert_callbacks import EarlyStoppingAtMinLoss, PredictionSaveCallback
 from tf_chexpert_utilities import *
 from torch_chexpert_dataset import ChexpertDataset
 # handle ssl problem
