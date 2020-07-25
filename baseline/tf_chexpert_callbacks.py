@@ -1,17 +1,23 @@
+import sys
+sys.path.append('./baseline')
+from tf_chexpert_utilities import *
 import tensorflow as tf
 import numpy as np
 import h5py
+
 # define the custom callback for prediction save
 class PredictionSaveCallback(tf.keras.callbacks.Callback):
-  def __init__(self, train_loader, validation_loader, prediction_save_folder):
+  def __init__(self, train_loader, validation_loader, h5_save, prediction_folder, epoch_resume):
     super(PredictionSaveCallback, self).__init__()
+    self.h5_save = h5_save
     self.train_loader = train_loader
     self.val_loader = validation_loader
-    self.prediction_save_folder = prediction_save_folder
+    self.epoch_resume = epoch_resume
     self.epoch=None
     self.batch_size=self.train_loader.batch_size
-    self.train_predictions = np.array([np.zeros(2,)]*self.train_loader.get_total_item_count())
-    self.val_predictions = np.array([np.zeros(2,)]*self.val_loader.get_total_item_count())
+    self.train_predictions = np.zeros((self.train_loader.get_total_item_count(), 2)) 
+    self.val_predictions = np.zeros((self.val_loader.get_total_item_count(), 2))
+    self.prediction_folder = prediction_folder
     #self.task_queue = TaskQueue(num_workers=1)
 
   def on_epoch_begin(self, epoch, logs={}):
@@ -19,33 +25,32 @@ class PredictionSaveCallback(tf.keras.callbacks.Callback):
 
   # to get train predictions
   def on_train_batch_end(self, batch, logs={}):
-    y_pred_t = self.model.predict(self.train_loader[batch][0])
+    x, y = self.train_loader[batch]
+    y_pred_t = self.model.predict(x)
     for idx in range(len(y_pred_t)):
       item_id = batch * len(y_pred_t) + idx
-      #print("item id: {} on batch: {} on idx:{}".format(item_id, batch, idx))
       self.train_predictions[item_id] = y_pred_t[idx]
 
   # to get validation predictions
   def on_test_batch_end(self, batch, logs={}):
-    y_pred_v = self.model.predict(self.val_loader[batch][0])
+    x, y = self.val_loader[batch]
+    y_pred_v = self.model.predict(x)
     for idx in range(len(y_pred_v)):
       item_id = batch * len(y_pred_v) + idx
-      #print("item id: {} on batch: {} on idx:{}".format(item_id, batch, idx))
       self.val_predictions[item_id] = y_pred_v[idx]
   
   # TO SAVE ALL TRAIN AND VALIDATION PREDICTONS
   def on_epoch_end(self, epoch, logs={}):
-    fname     = '{}/predictions_train_e_{}.h5'.format(self.prediction_save_folder, epoch)
-    fname_val = '{}/predictions_val_e_{}.h5'.format(self.prediction_save_folder, epoch)
-    with h5py.File(fname, 'w') as out:
-        out['predictions'] = self.train_predictions
-
-    with h5py.File(fname_val, 'w') as out:
-        out['predictions'] = self.val_predictions
-        
-    # reset the predictions
-    self.train_predictions = np.array([np.zeros(2,)]*self.train_loader.get_total_item_count())
-    self.val_predictions   = np.array([np.zeros(2,)]*self.val_loader.get_total_item_count())
+    e = int(epoch) + self.epoch_resume
+    #save train predictions
+    fname = f'{self.prediction_folder}/train_predictions_{epoch}'
+    save_ndarray(fname, self.train_predictions)
+    #save val predictions
+    fname = f'{self.prediction_folder}/val_predictions_{epoch}'
+    save_ndarray(fname, self.val_predictions)
+    # reset
+    self.train_predictions = self.train_predictions * 0
+    self.val_predictions = self.val_predictions * 0
     
 # TAKEN FROM: https://www.tensorflow.org/guide/keras/custom_callback#early_stopping_at_minimum_loss
 class EarlyStoppingAtMinLoss(tf.keras.callbacks.Callback):

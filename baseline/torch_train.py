@@ -235,7 +235,6 @@ train_preds = torch.zeros(len(trainset), num_classes) - 1.
 val_preds = torch.zeros(len(valset), num_classes) - 1.
 
 
-
 if RESUME == 1:
   fn = os.path.join(model_save_dir, 'checkpoint.pth.tar')
   ckpt = torch.load(fn)
