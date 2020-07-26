@@ -43,10 +43,10 @@ class PredictionSaveCallback(tf.keras.callbacks.Callback):
   def on_epoch_end(self, epoch, logs={}):
     e = int(epoch) + self.epoch_resume
     #save train predictions
-    fname = f'{self.prediction_folder}/train_predictions_{epoch}'
+    fname = f'{self.prediction_folder}/train_predictions_{e}'
     save_ndarray(fname, self.train_predictions)
     #save val predictions
-    fname = f'{self.prediction_folder}/val_predictions_{epoch}'
+    fname = f'{self.prediction_folder}/val_predictions_{e}'
     save_ndarray(fname, self.val_predictions)
     # reset
     self.train_predictions = self.train_predictions * 0
