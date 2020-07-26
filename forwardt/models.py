@@ -50,8 +50,8 @@ class KerasModel():
         self.model.compile(loss=self.make_loss(loss, P, binary), optimizer=self.optimizer, metrics=[accuracy])
         self.model.summary()
 
-    def direct_load_model(self, filename, epoch_resume):
-        self.model = tf.keras.models.load_model(file)
+    def direct_load_model(self, filename, epoch_resume, loss, P=None, binary=True):
+        self.model = tf.keras.models.load_model(filename, custom_objects={'loss':self.make_loss(loss,P,binary)})
         self.epochs -= epoch_resume 
         print(f'Loaded model from {filename} at epoch: {epoch_resume}')
 
