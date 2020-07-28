@@ -59,7 +59,7 @@ class KerasModel():
         self.model.load_weights(filename)
         print("Loaded model's weight from %s" % filename)
 
-    def fit_model(self, model_file, additional_callbacks = []):
+    def fit_model(self, model_file, epoch_resume, additional_callbacks = []):
         if self.train_loader is None or self.val_loader is None or self.epochs is None or self.batch_size is None:
             print('Parameters are not initialized correctly. ABORTING NETWORK TRANING.')
             return
@@ -67,8 +67,8 @@ class KerasModel():
         callbacks = []
         # get saver callbacks
         monitor = 'val_loss'
-        best_only_saver_callback = ModelCheckpoint(str(model_file)+'_best.h5', monitor=monitor, verbose=1, save_best_only=True)
-        all_saver_calback = ModelCheckpoint(str(model_file)+'_latest.h5', monitor=monitor, verbose=1, save_best_only=False)
+        best_only_saver_callback = ModelCheckpoint(f'{str(model_file)}_best_{epoch_resume}.h5', monitor=monitor, verbose=1, save_best_only=True)
+        all_saver_calback = ModelCheckpoint(f'{str(model_file)}_latest.h5', monitor=monitor, verbose=1, save_best_only=False)
         # add the new callbacks to the old ones
         callbacks.append(best_only_saver_callback)
         callbacks.append(all_saver_calback)

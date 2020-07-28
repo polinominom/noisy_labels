@@ -98,7 +98,7 @@ pcs = PredictionSaveCallback(train_loader, val_loader, h5_save=None, prediction_
 callbacks = [pcs]
 
 #kerasModel.prepare_data_augmentation()
-history = kerasModel.fit_model(model_path, additional_callbacks=callbacks)
+history = kerasModel.fit_model(model_path, epoch_resume, additional_callbacks=callbacks)
 # save history
 history_folder = './history/'
 history_forwardt_folder = f'{history_folder}/forwardt'

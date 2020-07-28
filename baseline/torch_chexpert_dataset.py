@@ -21,3 +21,22 @@ class ChexpertDataset(Dataset):
            
   def __len__(self):
     return len(self.hdf5_dataset)
+
+
+class ChexpertNLNLDataset(Datset):
+  def __init__(self, r, np_dataset, noisy_labels, batch_size, transform):
+    self.r = r # noise ratio
+    self.np_dataset = np_dataset
+    self.transform = transform
+    self.noisy_labels = noisy_labels
+    self.batch_size = batch_size
+                
+  def __getitem__(self, index):
+    x = self.np_dataset[index]
+    img = Image.fromarray(x.astype(np.uint8))
+    img = self.transform(img)
+    target = self.noisy_labels[index]
+    return img, target, index
+           
+  def __len__(self):
+    return len(self.np_dataset)
