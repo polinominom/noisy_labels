@@ -20,11 +20,17 @@ print('healthy sample count: %i'%len(pos_global_ids))
 print('not-healthy sample count: %i'%len(neg_global_ids))
 min_sample_count = min(len(pos_global_ids), len(neg_global_ids))
 if min_sample_count % 10 != 0:
-    print("ERROR: Sample count is indivisible to 10(%i). Need to provide a new method, noise generation stopped!"%min_sample_count)
-# Get samples with 8 - 1 - 1 from
+    _old = min_sample_count
+    min_sample_count = min_sample_count - (min_sample_count % 10)
+    print(f"Warning: min sample count reduced from: {_old} to:{min_sample_count} in order to properly extract same amount of data...")
 
+
+# Get samples with 8 - 1 - 1 from
 limit=min_sample_count//10
 print('limit:%i'%limit)
+
+# TODO: adjust neg_global_ids to have same proportion of the classes
+exit()
 
 train_pos = np.zeros(limit*8)
 train_neg = np.zeros(limit*8)
