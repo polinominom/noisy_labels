@@ -4,7 +4,7 @@ import tensorflow as tf
 from tensorflow.keras.callbacks import ModelCheckpoint
 from tensorflow.keras.callbacks import LearningRateScheduler
 from tensorflow.keras.preprocessing import sequence
-from tensorflow.keras.optimizers import SGD
+from tensorflow.keras.optimizers import SGD, Adam
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from loss import *
 
@@ -119,10 +119,11 @@ class ChexpertModel(KerasModel):
         self.num_batch = train_loader.batch_size
         self.classes = 2
         self.augmentation = True
-        self.optimizer = SGD(lr=0.1, momentum=0.9, decay=0.0) # TODO: ADAM ?
+        self.optimizer = Adam(lr=5e-4)
+        #SGD(lr=0.1, momentum=0.9, decay=0.0) # TODO: ADAM ?
         # ASSIGN THE PARAMATER 'self.scheduler'
         self.lr_scheduler()
-        self.decay = 0.0001
+        #self.decay = 0.0001
 
     def prepare_data_augmentation(self):
         if self.train_loader is None or self.val_loader is None:
@@ -146,11 +147,11 @@ class ChexpertModel(KerasModel):
     def lr_scheduler(self):
         def scheduler(epoch):
             if epoch > 80:
-                return 0.001
+                return 5e-6
             elif epoch > 40:
-                return 0.01
+                return 5e-5
             else:
-                return 0.1
+                return 5e-4
 
         print('LR scheduler')
         self.scheduler = LearningRateScheduler(scheduler)

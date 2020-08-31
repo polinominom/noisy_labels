@@ -49,7 +49,7 @@ print("Params: loss=%s, noise=%s"% (loss, noise))
 
 model = densenet.get_densenet()
 
-train_loader, val_loader = utils.get_chexpert_loaders(float(noise), batch_size=16)
+train_loader, val_loader = utils.get_chexpert_loaders(float(noise), batch_size=32)
 
 model_folder ='./models/forwardt/'
 model_path = fpath('./models', loss, noise)
@@ -59,9 +59,7 @@ if not os.path.exists(model_folder):
 # Check this.
 filter_outlier = False
 
-kerasModel = ChexpertModel(model, train_loader, val_loader, epochs=100, batch_size=16)
-# TODO: maybe optimizer adam?
-# kerasModel.optimizer = Adam()
+kerasModel = ChexpertModel(model, train_loader, val_loader, epochs=100, batch_size=32)
 P = build_uniform_P(2, noise)
 
 if loss == 'est_forward':

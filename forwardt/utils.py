@@ -26,12 +26,7 @@ def get_chexpert_loaders(noise, batch_size=32):
   train_dataset = dset['train']
   val_dataset = dset['val']
   test_dataset = dset['test']
-
-  print('-'*30)
-  print(' LEN: %i, Absolute paths of train data: %s'%(len(train_dataset),str(train_dataset)))
-  print(' LEN: %i, Absolute paths of val data: %s'%(len(val_dataset), str(val_dataset)))
-  print(' LEN: %i, Absolute paths of test data: %s'%(len(test_dataset), str(test_dataset)))
-
+  # shuffle
   train_shuffled_idx_lst  = _get_shuffled_indices(train_dataset, 1234)
   val_shuffled_idx_lst    = _get_shuffled_indices(val_dataset, 5678)
   test_shuffled_idx_lst   = _get_shuffled_indices(test_dataset, 9012)
@@ -62,7 +57,7 @@ def get_chexpert_loaders(noise, batch_size=32):
   #np_test_dataset  = np_test_dataset[test_shuffled_idx_lst]
   for n in noises:
       train_noisy_label_dict[n]   =  train_noisy_label_dict[n][train_shuffled_idx_lst]
-      val_noisy_label_dict[n]     =  train_noisy_label_dict[n][val_shuffled_idx_lst]
+      val_noisy_label_dict[n]     =  val_noisy_label_dict[n][val_shuffled_idx_lst]
   train_gt = train_noisy_label_dict[0]
   val_gt = val_noisy_label_dict[0]
 
