@@ -19,7 +19,7 @@ from tf_chexpert_loader import *
 import densenet
 
 def fpath(folder, loss, noise):
-    return f'{folder}/forwardt/densenet121_l_{loss}_n_{noise}'
+    return f'{folder}/forwardt/covid_densenet121_l_{loss}_n_{noise}'
 
 def error_and_exit():
     print('Usage: ' + str(__file__) + ' -l loss -n noise_rate -c positive_continue_epoch')
@@ -50,9 +50,9 @@ if loss is None or noise is None:
 
 print("Params: loss=%s, noise=%s"% (loss, noise))
 
-model = densenet.get_densenet()
+model = densenet.get_densenet(2)
 
-train_loader, val_loader = utils.get_chexpert_loaders(float(noise), batch_size=batch_size)
+train_loader, val_loader = utils.get_covid_loaders(float(noise), batch_size=batch_size)
 
 model_folder ='./models/forwardt/'
 model_path = fpath('./models', loss, noise)
@@ -78,7 +78,7 @@ if loss == 'est_forward':
     print('Condition number:', np.linalg.cond(P_est))
     print('T estimated: \n', P_est)
     
-    model = densenet.get_densenet()
+    model = densenet.get_densenet(2)
     kerasModel = ChexpertModel(model, train_loader, val_loader, epochs=100, batch_size=batch_size)
     # compile the model with forward
     if epoch_resume == 0:
@@ -95,7 +95,7 @@ else:
         kerasModel.direct_load_model(model_path+'_latest.h5', epoch_resume, loss=loss, P=P, binary=True)
         
 # some additional callbacks
-prediction_save_folder = f'./network_training_predictions/forwardt_{loss}_{int(noise*100)}'
+prediction_save_folder = f'./network_training_predictions/covid_forwardt_{loss}_{int(noise*100)}'
 if not os.path.exists('./network_training_predictions'):
     os.mkdir('./network_training_predictions')
 if not os.path.exists(prediction_save_folder):
@@ -124,8 +124,8 @@ with open(history_file, 'wb') as f:
     print('History dumped at ' + str(history_file))
 
 # test
-test_loader = get_test_loader()
-score = kerasModel.evaluate_model(test_loader)
-print('TEST SCORE: %s'%s)
+#test_loader = get_covid_test_loader()
+#score = kerasModel.evaluate_model(test_loader)
+#print('TEST SCORE: %s'%s)
 
     

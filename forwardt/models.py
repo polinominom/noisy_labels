@@ -38,16 +38,17 @@ class KerasModel():
             return boot_soft
         else:
             ValueError("Loss unknown.")
-
     def compile(self, loss, P=None, binary=True):
         if self.optimizer is None or self.model is None:
+            print('something wrong...')
             ValueError()
         
-        accuracy = tf.keras.metrics.SparseCategoricalAccuracy()
-        if binary:
-            accuracy = tf.keras.metrics.binary_accuracy
+        defined_metrics = [tf.keras.metrics.BinaryAccuracy(name='accuracy'),
+            tf.keras.metrics.Precision(name='precision'),
+            tf.keras.metrics.Recall(name='recall'),
+            tf.keras.metrics.AUC(name='auc')]
 
-        self.model.compile(loss=self.make_loss(loss, P, binary), optimizer=self.optimizer, metrics=[accuracy])
+        self.model.compile(loss=self.make_loss(loss, P, binary), optimizer=self.optimizer, metrics=defined_metrics)
         self.model.summary()
 
     def direct_load_model(self, filename, epoch_resume, loss, P=None, binary=True):
@@ -94,7 +95,7 @@ class KerasModel():
                             verbose=1, callbacks=callbacks)
 
         # use the model that reached the lowest loss at training time
-        self.load_model(model_file)
+        self.load_model(model_file+'_latest.h5')
         return history.history
 
     def evaluate_model(self, loader):
