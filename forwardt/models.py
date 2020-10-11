@@ -98,8 +98,8 @@ class KerasModel():
         self.load_model(model_file+'_latest.h5')
         return history.history
 
-    def evaluate_model(self, loader):
-        score = self.model.evaluate(loader, batch_size=self.num_batch, verbose=1)
+    def evaluate_model(self, loader, callbacks=[]):
+        score = self.model.evaluate(loader.get_all_samples(), loader.get_all_real_ground_truth(), batch_size=loader.get_total_item_count(), verbose=1, callbacks=callbacks)
         print('Test score:', score[0])
         print('Test accuracy:', score[1])
         return score[1]
@@ -120,7 +120,7 @@ class ChexpertModel(KerasModel):
         self.num_batch = train_loader.batch_size
         self.classes = 2
         self.augmentation = True
-        self.optimizer = Adam(lr=5e-4)
+        self.optimizer = Adam(lr=1e-4)
         #SGD(lr=0.1, momentum=0.9, decay=0.0) # TODO: ADAM ?
         # ASSIGN THE PARAMATER 'self.scheduler'
         self.lr_scheduler()
@@ -148,11 +148,11 @@ class ChexpertModel(KerasModel):
     def lr_scheduler(self):
         def scheduler(epoch):
             if epoch > 80:
-                return 5e-6
+                return 1e-6
             elif epoch > 40:
-                return 5e-5
+                return 1e-5
             else:
-                return 5e-4
+                return 1e-4
 
         print('LR scheduler')
         self.scheduler = LearningRateScheduler(scheduler)

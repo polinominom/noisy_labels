@@ -32,6 +32,29 @@ def get_noisy_gt(noise, correct_gt):
   result[zero_indicces] = 1
   return result
 
+def get_covid_test_loader(batch_size):
+  dset = h5py.File('./buffer/baseline/covid_all_dset.hdf5', 'r')
+  test_dataset        = dset['test']
+  test_label_dataset  = dset['test_labels']
+  #
+  test_label_dataset = np.array(test_label_dataset, dtype=np.int64)
+  # SHUFFLE VAL INDICES
+  np.random.seed(9012)
+  test_shuffled_idx_lst = np.arange(len(test_dataset))
+  np.random.shuffle(test_shuffled_idx_lst)
+  print("shuffled_val_indices: %s"%str(test_shuffled_idx_lst))
+  #
+  v = np.zeros((len(test_label_dataset), 2))
+  for i, val in  enumerate(np.array(test_label_dataset)):
+      v[i][val] = 1
+  #
+  test_label_dataset  = v
+  np_test_dataset     = np.array(test_dataset, dtype=np.uint8)[test_shuffled_idx_lst]
+  test_ground_truth   = np.array(test_label_dataset, dtype=np.float32)[test_shuffled_idx_lst]
+  test_loader         = ChexpertLoader(np_test_dataset, test_ground_truth, test_ground_truth, batch_size)
+  #
+  return test_loader
+
 def get_covid_loaders(noise, batch_size):
   """## GET SAVED HDF5 DATASET FILE"""    
   # get h5py DATASET file
@@ -41,17 +64,9 @@ def get_covid_loaders(noise, batch_size):
   val_dataset = dset['val']
   val_label_dataset = dset['val_labels']
 
-  t = np.zeros((len(train_label_dataset), 2))
-  v = np.zeros((len(val_label_dataset), 2))
-  
-  # convert to categorical
-  for i, val in  enumerate(np.array(train_label_dataset)):
-      t[i][val] = 1
-  for i, val in  enumerate(np.array(val_label_dataset)):
-      v[i][val] = 1
-  
-  train_label_dataset = t
-  val_label_dataset = v
+  train_label_dataset = np.array(train_label_dataset, dtype=np.int64)
+  val_label_dataset = np.array(val_label_dataset, dtype=np.int64)
+
   """## SHUFFLING INDICES"""
   # SHUFFLE TRAIN INDICES
   np.random.seed(1034)
@@ -68,9 +83,33 @@ def get_covid_loaders(noise, batch_size):
   val_noisy_label_dict = {}
   noises = [0, 0.1, 0.2, 0.3, 0.4, 0.5, .60]
   for n in noises:
-    train_noisy_label_dict[n] = get_noisy_gt(n, np.array(train_label_dataset, dtype=np.float32))[train_shuffled_idx_lst]
-    val_noisy_label_dict[n] = get_noisy_gt(n, np.array(val_label_dataset, dtype=np.float32))[val_shuffled_idx_lst]
+    t_n = get_noisy_gt(n, np.array(train_label_dataset, dtype=np.float32))[train_shuffled_idx_lst]
+    v_n = get_noisy_gt(n, np.array(val_label_dataset, dtype=np.float32))[val_shuffled_idx_lst]
+    #
+    t = np.zeros((len(t_n), 2))
+    #print(t_n)
+    v = np.zeros((len(v_n), 2))
+    #print(v_n)
+    #print(f' AJKSKgFGJKASfafhksHJADJLgGHLAKDhgKŞDLAjgKŞDJgKŞASLKJASDJKLADFjkLADSjkJKLdsaJKADSJKDSAkljASjkldL \n\n t: {t.shape}')
+    # convert to categorical
+    for i, val in  enumerate(np.array(t_n)):
+      t[i][int(val)] = 1
+    for i, val in  enumerate(np.array(v_n)):
+      v[i][int(val)] = 1
+    train_noisy_label_dict[n] = np.array(t)
+    val_noisy_label_dict[n]   = np.array(v)
   
+  # convert to categorical
+  t = np.zeros((len(train_label_dataset), 2))
+  v = np.zeros((len(val_label_dataset), 2))
+  for i, val in  enumerate(np.array(train_label_dataset)):
+      t[i][val] = 1
+  for i, val in  enumerate(np.array(val_label_dataset)):
+      v[i][val] = 1
+  
+  train_label_dataset = t
+  val_label_dataset = v
+  #
   train_ground_truth  = np.array(train_label_dataset, dtype=np.float32)[train_shuffled_idx_lst]
   val_ground_truth    = np.array(val_label_dataset, dtype=np.float32)[val_shuffled_idx_lst]
   #

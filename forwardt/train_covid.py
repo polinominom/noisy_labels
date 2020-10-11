@@ -93,7 +93,8 @@ else:
     elif epoch_resume > 0:
         # get the already saved model
         kerasModel.direct_load_model(model_path+'_latest.h5', epoch_resume, loss=loss, P=P, binary=True)
-        
+
+ 
 # some additional callbacks
 prediction_save_folder = f'./network_training_predictions/covid_forwardt_{loss}_{int(noise*100)}'
 if not os.path.exists('./network_training_predictions'):
