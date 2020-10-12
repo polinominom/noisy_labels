@@ -15,6 +15,7 @@ tensorboard_logs/
 /buffer/baseline/*
 !/buffer/forwardt
 /buffer/forwardt/*
+network_training_predictions/
 ######FILES
 *.pkl
 *.txt
