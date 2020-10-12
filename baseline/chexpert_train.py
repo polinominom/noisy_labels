@@ -84,8 +84,9 @@ for n in noises:
 
 """## SOME TRAINING PARAMATERS"""
 # get custom datasets for network training
-BATCH_SIZE = 32
-EPOCHS = 150 
+BATCH_SIZE = 16
+EPOCHS = 100
+RESUME_EPOCH = 0
 
 # GET SHUFFLED NAMES/LABES FOR TRAIN
 train_s_fnames      = sample_train_fnames[train_shuffled_idx_lst]
@@ -100,13 +101,17 @@ tensorboard_log_dir = './tensorboard_logs'
 network_training_pred_folder = './network_training_predictions'
 prediction_save_folder = './network_training_predictions/densenet121_baseline'
 model_dir = './models'
-model_save_dir = './models/densenet121_baseline'
+baseline_model_dir = './models/densenet121_baseline'
+model_save_dir = f'{baseline_model_dir}/last'
+best_model_save_dir = f'{baseline_model_dir}/best'
 
 make_sure_folder_exists(tensorboard_log_dir)
 make_sure_folder_exists(network_training_pred_folder)
 make_sure_folder_exists(prediction_save_folder)
 make_sure_folder_exists(model_dir)
+make_sure_folder_exists(baseline_model_dir)
 make_sure_folder_exists(model_save_dir)
+make_sure_folder_exists(best_model_save_dir)
 make_sure_folder_exists('%s/%s'%(prediction_save_folder, '00'))
 for n in noises:
     make_sure_folder_exists('%s/%i'%(prediction_save_folder, int(n*100)))
@@ -122,13 +127,14 @@ else:
 
 # These callback initializations shouldn't give any errors.
 monitor = 'val_loss'
-mc_callback = ModelCheckpoint(fpath(model_save_dir, int(100*opt.noise_ratio)), monitor=monitor, verbose=1, save_best_only=True)
+best_mc_callback = ModelCheckpoint(fpath(best_model_save_dir, int(100*opt.noise_ratio)), monitor=monitor, verbose=1, save_best_only=True)
+last_mc_callback = ModelCheckpoint(fpath(model_save_dir, int(100*opt.noise_ratio)), monitor=monitor, verbose=1, save_best_only=False)
 pcs = PredictionSaveCallback(train_loader, val_loader, prediction_save_folder='%s/%i'%(prediction_save_folder, int(100*opt.noise_ratio)))  
 tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=tensorboard_log_dir)
-callbacks = [pcs, tensorboard_callback, mc_callback]
+callbacks = [pcs, tensorboard_callback, best_mc_callback, last_mc_callback]
 
 """## TRAINING"""
-print('best model weights will be saved at: %s'%str(fpath(model_save_dir, int(100*opt.noise_ratio))))
+print('best model weights will be saved at: %s'%str(fpath(best_model_save_dir, int(100*opt.noise_ratio))))
 print('************************ TRAINING STARTED n:%s ************************'%str(opt.noise_ratio))
 # print('EVERYTHING WORKS')
 # exit()

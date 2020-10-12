@@ -6,34 +6,37 @@ class ChexpertLoader(tf.keras.utils.Sequence):
     """
         Loads dataset batch by batch to ram then deal with it
     """
-    def __init__(self, image_fnames, ground_truth, batch_size):
-        self.image_fnames = image_fnames
-        self.labels = ground_truth
+    def __init__(self, hdf5_dataset, noisy_labels, real_ground_truth, batch_size):
+        self.hdf5_dataset = hdf5_dataset
+        self.labels = noisy_labels
+        self.real_ground_truth = real_ground_truth
         self.batch_size = batch_size
 
     def __len__(self):
-        return (np.ceil(len(self.image_fnames) / float(self.batch_size))).astype(np.int)
+        return (np.ceil(len(self.hdf5_dataset) / float(self.batch_size))).astype(np.int)
 
     def __getitem__(self, idx):
-        batch_x = self.image_fnames[idx * self.batch_size : (idx+1) * self.batch_size]
-        data_y = self.labels[idx * self.batch_size : (idx+1) * self.batch_size]
-
-        k = np.zeros(256*256*3).reshape(256,256,3)
-        data_x = np.array([k] * len(batch_x))
-        del k
-
-        for i in range(len(batch_x)):
-            data_x[i] = self.unpickle(batch_x[i])
-
+        _from = idx * self.batch_size
+        _to = (idx+1) * self.batch_size
+        data_x = self.hdf5_dataset[_from:_to]
+        data_y = self.labels[_from:_to]
         return data_x, data_y
 
     def get_batch_length(self, idx):
-        batch_x = self.image_fnames[idx * self.batch_size : (idx+1) * self.batch_size]
-        return len(batch_x)
+        return self.batch_size
 
     def get_total_item_count(self):
-        return len(self.image_fnames)
+        return len(self.hdf5_dataset)
 
     def unpickle(self, fname):
         with open(fname, 'rb') as fp:
             return pickle.load(fp)
+
+    def get_all_samples(self):
+        return self.hdf5_dataset
+
+    def get_all_labels(self):
+        return self.labels
+
+    def get_all_real_ground_truth(self):
+        return self.real_ground_truth

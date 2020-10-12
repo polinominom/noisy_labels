@@ -3,8 +3,13 @@
 ## Densenet
 """
 from tensorflow.keras.applications.densenet import DenseNet121
-def get_densenet():
-  return DenseNet121(include_top=True, 
-                      weights=None,
-                      input_shape=(256, 256, 3), 
-                      classes=2)
+from tensorflow.keras.layers import Dense, GlobalAveragePooling2D, Dropout, Flatten
+from tensorflow.keras.models import Model
+def get_densenet(num_classes):
+  base_model = DenseNet121(include_top=False, weights='imagenet')
+  x = base_model.output
+  x = GlobalAveragePooling2D()(x)
+  x = Dense(1024, activation='relu')(x)
+  predictions = Dense(num_classes, activation='sigmoid')(x)
+  model = Model(inputs=base_model.input, outputs=predictions)
+  return model
