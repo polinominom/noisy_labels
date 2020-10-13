@@ -1,0 +1,5 @@
+- implement gce
+- Carefully watch out classifier py
+
+Usage Example:
+python chexpert_experiment/bin/train.py chexpert_experiment/config/example.json chexpert_experiment/logdir --num_workers 4 --device_ids "0"
