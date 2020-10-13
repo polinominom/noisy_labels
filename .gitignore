@@ -16,6 +16,7 @@ tensorboard_logs/
 !/buffer/forwardt
 /buffer/forwardt/*
 network_training_predictions/
+gdrive_utils/CheXpert-v1.0-small/
 ######FILES
 *.pkl
 *.txt
