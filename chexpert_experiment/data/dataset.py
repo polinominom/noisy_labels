@@ -15,7 +15,7 @@ class ImageDataset(Dataset):
         self._labels = []
         self._mode = mode
 
-        columns = ['Path','Sex','Age','Frontal/Lateral','AP/PA','No Finding','Enlarged Cardiomediastinum','Cardiomegaly','Lung Opacity','Lung Lesion','Edema','Consolidation','Pneumonia','Atelectasis','Pneumothorax','Pleural Effusion','Pleural' 'Other,Fracture','Support Devices']
+        columns = ['Path','Sex','Age','Frontal/Lateral','AP/PA','No Finding','Enlarged Cardiomediastinum','Cardiomegaly','Lung Opacity','Lung Lesion','Edema','Consolidation','Pneumonia','Atelectasis','Pneumothorax','Pleural Effusion','Pleural Other','Fracture','Support Devices']
         self._label_header = columns[5:]
         df = pd.read_csv(label_path).fillna(0)
         self._image_paths = np.array(df[columns[0]])
@@ -28,7 +28,7 @@ class ImageDataset(Dataset):
         mask = self._labels==-1
         if cfg.label_fill_type == 'zeros':
             # assign every -1 to 0
-            self._labels = np.where(mask, 0, self._labels)s
+            self._labels = np.where(mask, 0, self._labels)
         else:
             raise Exception('The label filling method namely [{}] is not implemented yet...')
 
