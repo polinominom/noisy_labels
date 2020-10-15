@@ -312,19 +312,14 @@ def run(args):
             model.module.load_state_dict(ckpt)
     optimizer = get_optimizer(model.parameters(), cfg)
 
-    src_folder = os.path.dirname(os.path.abspath(__file__)) + '/../'
-    dst_folder = os.path.join(args.save_path, 'classification')
-    rc, size = subprocess.getstatusoutput('du --max-depth=0 %s | cut -f1'
-                                          % src_folder)
-    if rc != 0:
-        raise Exception('Copy folder error : {}'.format(rc))
-    rc, err_msg = subprocess.getstatusoutput('cp -R %s %s' % (src_folder,
-                                                              dst_folder))
-    if rc != 0:
-        raise Exception('copy folder error : {}'.format(err_msg))
-
-    copyfile(cfg.train_csv, os.path.join(args.save_path, 'train.csv'))
-    copyfile(cfg.dev_csv, os.path.join(args.save_path, 'dev.csv'))
+    #src_folder = os.path.dirname(os.path.abspath(__file__)) + '/../'
+    #dst_folder = os.path.join(args.save_path, 'classification')
+    #rc, size = subprocess.getstatusoutput('du --max-depth=0 %s | cut -f1' % src_folder)
+    #if rc != 0: raise Exception('Copy folder error : {}'.format(rc))
+    #rc, err_msg = subprocess.getstatusoutput('cp -R %s %s' % (src_folder, dst_folder))
+    #if rc != 0: raise Exception('copy folder error : {}'.format(err_msg))
+    #copyfile(cfg.train_csv, os.path.join(args.save_path, 'train.csv'))
+    #copyfile(cfg.dev_csv, os.path.join(args.save_path, 'dev.csv'))
 
     dataloader_train = DataLoader(
         ImageDataset(cfg.train_csv, cfg, mode='train'),
@@ -335,7 +330,8 @@ def run(args):
         batch_size=cfg.dev_batch_size, num_workers=args.num_workers,
         drop_last=False, shuffle=False)
     dev_header = dataloader_dev.dataset._label_header
-
+    print('dataloaders are set...')
+    logging.info("[LOGGING TEST]: dataloaders are set...")
     summary_train = {'epoch': 0, 'step': 0}
     summary_dev = {'loss': float('inf'), 'acc': 0.0}
     summary_writer = SummaryWriter(args.save_path)
@@ -357,6 +353,7 @@ def run(args):
         best_dict['auc_dev_best'] = ckpt['auc_dev_best']
         epoch_start = ckpt['epoch']
 
+    print('Everything is set starting to train...')
     for epoch in range(epoch_start, cfg.epoch):
         lr = lr_schedule(cfg.lr, cfg.lr_factor, summary_train['epoch'],
                          cfg.lr_epochs)
