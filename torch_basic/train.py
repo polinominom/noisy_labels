@@ -48,7 +48,6 @@ import torch.optim as optim
 criterion = nn.CrossEntropyLoss()
 criterion = criterion.cuda()
 optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
-optimizer = optimizer.cuda()
 
 net.train()
 
