@@ -18,6 +18,7 @@ tensorboard_logs/
 network_training_predictions/
 gdrive_utils/CheXpert-v1.0-small/
 ######FILES
+*.zip
 *.pkl
 *.txt
 *.h5
@@ -34,3 +35,4 @@ filepaths.json
 h5_coverter.py
 to_be_removed.py
 /gdrive_utils/credentials.json
+CheXpert-v1.0-small/
