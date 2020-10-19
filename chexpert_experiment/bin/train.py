@@ -27,6 +27,8 @@ from model.classifier import Classifier  # noqa
 from utils.misc import lr_schedule  # noqa
 from model.utils import get_optimizer  # noqa
 
+import h5py
+
 parser = argparse.ArgumentParser(description='Train model')
 parser.add_argument('cfg_path', default=None, metavar='CFG_PATH', type=str,
                     help="Path to the config file in yaml format")
@@ -43,6 +45,8 @@ parser.add_argument('--resume', default=0, type=int, help="If resume from "
 parser.add_argument('--logtofile', default=True, type=bool, help="Save log "
                     "in save_path/log.txt if set True")
 parser.add_argument('--verbose', default=False, type=bool, help="Detail info")
+parser.add_argument('--train_h5', type=str, help="h5 file path for train dataset")
+parser.add_argument('--val_h5', type=str, help="h5 file path for val dataset")
 
 
 def get_loss(output, target, index, device, cfg):
@@ -271,7 +275,7 @@ def test_epoch(summary, cfg, args, model, dataloader):
     return summary, predlist, true_list
 
 
-def run(args):
+def run(args, train_h5_file, val_h5_file):
     with open(args.cfg_path) as f:
         cfg = edict(json.load(f))
         if args.verbose is True:
@@ -322,14 +326,14 @@ def run(args):
     #copyfile(cfg.dev_csv, os.path.join(args.save_path, 'dev.csv'))
 
     dataloader_train = DataLoader(
-        ImageDataset(cfg.train_csv, cfg, mode='train'),
+        ImageDataset(train_h5_file, cfg, mode='train'),
         batch_size=cfg.train_batch_size, num_workers=args.num_workers,
         drop_last=True, shuffle=True)
     dataloader_dev = DataLoader(
-        ImageDataset(cfg.dev_csv, cfg, mode='dev'),
+        ImageDataset(val_h5_file, cfg, mode='val'),
         batch_size=cfg.dev_batch_size, num_workers=args.num_workers,
         drop_last=False, shuffle=False)
-    dev_header = dataloader_dev.dataset._label_header
+    #dev_header = dataloader_dev.dataset._label_header
     print('dataloaders are set...')
     logging.info("[LOGGING TEST]: dataloaders are set...")
     summary_train = {'epoch': 0, 'step': 0}
@@ -468,7 +472,9 @@ def main():
         print('Using the specified args:')
         print(args)
 
-    run(args)
+    with h5py.File(args.train_h5, 'r') as train_h5:
+        with h5py.File(args.val_h5, 'r') as val_h5:
+            run(args, train_h5, val_h5)
 
 
 if __name__ == '__main__':

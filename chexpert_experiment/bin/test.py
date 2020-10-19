@@ -70,10 +70,10 @@ def test_epoch(cfg, args, model, dataloader, out_csv_path):
     with open(out_csv_path, 'w') as f:
         f.write(','.join(test_header) + '\n')
         for step in range(steps):
-            image, path = next(dataiter)
+            image, _ = next(dataiter)
+            batch_size = len(image)
             image = image.to(device)
             output, __ = model(image)
-            batch_size = len(path)
             pred = np.zeros((num_tasks, batch_size))
 
             for i in range(num_tasks):
@@ -81,10 +81,10 @@ def test_epoch(cfg, args, model, dataloader, out_csv_path):
 
             for i in range(batch_size):
                 batch = ','.join(map(lambda x: '{}'.format(x), pred[:, i]))
-                result = path[i] + ',' + batch
+                result = f's:{step}|i:{i}' + ',' + batch
                 f.write(result + '\n')
                 logging.info('{}, Image : {}, Prob : {}'.format(
-                    time.strftime("%Y-%m-%d %H:%M:%S"), path[i], batch))
+                    time.strftime("%Y-%m-%d %H:%M:%S"), f's:{step}|i:{i}', batch))
 
 
 def run(args):
