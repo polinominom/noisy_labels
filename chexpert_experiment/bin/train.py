@@ -86,7 +86,7 @@ def train_epoch(summary, summary_dev, cfg, args, model, dataloader,
     device = torch.device('cuda:{}'.format(device_ids[0]))
     steps = len(dataloader)
     dataiter = iter(dataloader)
-    label_header = dataloader.dataset._label_header
+    label_header = dev_header
     num_tasks = len(cfg.num_classes)
 
     time_now = time.time()
@@ -333,6 +333,7 @@ def run(args, train_h5_file, val_h5_file):
         ImageDataset(val_h5_file, cfg, mode='val'),
         batch_size=cfg.dev_batch_size, num_workers=args.num_workers,
         drop_last=False, shuffle=False)
+    #dev_header = dataloader_dev.dataset._label_header
     dev_header = ['No Finding','Enlarged Cardiomediastinum','Cardiomegaly','Lung Opacity','Lung Lesion','Edema','Consolidation','Pneumonia','Atelectasis','Pneumothorax','Pleural Effusion','Pleural Other','Fracture','Support Devices']
     print('dataloaders are set...')
     logging.info("[LOGGING TEST]: dataloaders are set...")
