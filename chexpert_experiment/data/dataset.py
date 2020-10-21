@@ -8,13 +8,12 @@ from data.utils import transform
 import pandas as pd
 np.random.seed(0)
 
-
 class ImageDataset(Dataset):
     def __init__(self, image_h5_file, cfg, mode='train'):
         self.cfg = cfg
         self._mode = mode
         self._image_h5 = image_h5_file
-        self._num_image = image_h5_file[f'{mode}_u_random'].shape[0]
+        self._num_image = min(222300, image_h5_file[f'{mode}_u_random'].shape[0])
         if cfg.label_fill_type == 'zeros':
             self._labels = np.array(image_h5_file[f'{mode}_u_zeros'], dtype=np.int8)
         elif cfg.label_fill_type == 'ones':
