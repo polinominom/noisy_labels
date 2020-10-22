@@ -9,17 +9,17 @@ import pandas as pd
 np.random.seed(0)
 
 class ImageDataset(Dataset):
-    def __init__(self, image_h5_file, cfg, mode='train'):
+    def __init__(self, x_lst, cfg, mode='train'):
         self.cfg = cfg
         self._mode = mode
-        self._image_h5 = image_h5_file
-        self._num_image = min(222300, image_h5_file[f'{mode}_u_random'].shape[0])
+        self._images = x_lst[0]
+        self._num_image = len(self._images)
         if cfg.label_fill_type == 'zeros':
-            self._labels = np.array(image_h5_file[f'{mode}_u_zeros'], dtype=np.int8)
+            self._labels = x_lst[0]
         elif cfg.label_fill_type == 'ones':
-            self._labels = np.array(image_h5_file[f'{mode}_u_ones'], dtype=np.int8)
+            self._labels = x_lst[1]
         elif cfg.label_fill_type == 'random':
-            self._labels = np.array(image_h5_file[f'{mode}_u_random'], dtype=np.int8)
+            self._labels = x_lst[2]
         else:
             raise Exception('The label filling method namely [{}] is not implemented yet...')
 
@@ -27,7 +27,7 @@ class ImageDataset(Dataset):
         return self._num_image
 
     def __getitem__(self, idx):
-        im = self._image_h5[self._mode][idx]
+        im = self._images[idx]
         image = Image.fromarray(im)
         if self._mode == 'train':
             image = GetTransforms(image, type=self.cfg.use_transforms_type)

@@ -324,13 +324,22 @@ def run(args, train_h5_file, val_h5_file):
     #if rc != 0: raise Exception('copy folder error : {}'.format(err_msg))
     #copyfile(cfg.train_csv, os.path.join(args.save_path, 'train.csv'))
     #copyfile(cfg.dev_csv, os.path.join(args.save_path, 'dev.csv'))
+    np_train_h5_file = np.array(train_h5_file['train'][:10000], dtype=np.uint8)
+    np_t_u_ones = np.array(train_h5_file['train_u_ones'][:10000], dtype=np.int8)    
+    np_t_u_zeros = np.array(train_h5_file['train_u_zeros'][:10000], dtype=np.int8)
+    np_t_u_random = np.array(train_h5_file['train_u_random'][:10000], dtype=np.int8)
+
+    np_val_h5_file = np.array(val_h5_file['val'], dtype=np.uint8)
+    np_v_u_ones = np.array(train_h5_file['val_u_ones'], dtype=np.int8)    
+    np_v_u_zeros = np.array(train_h5_file['val_u_zeros'], dtype=np.int8)
+    np_v_u_random = np.array(train_h5_file['val_u_random'], dtype=np.int8)
 
     dataloader_train = DataLoader(
-        ImageDataset(train_h5_file, cfg, mode='train'),
+        ImageDataset([np_train_h5_file, np_t_u_zeros, np_t_u_ones, np_t_u_random], cfg, mode='train'),
         batch_size=cfg.train_batch_size, num_workers=args.num_workers,
         drop_last=True, shuffle=True)
     dataloader_dev = DataLoader(
-        ImageDataset(val_h5_file, cfg, mode='val'),
+        ImageDataset([np_val_h5_file, np_v_u_zeros, np_v_u_ones, np_v_u_random], cfg, mode='val'),
         batch_size=cfg.dev_batch_size, num_workers=args.num_workers,
         drop_last=False, shuffle=False)
     #dev_header = dataloader_dev.dataset._label_header
