@@ -48,6 +48,7 @@ parser.add_argument('--verbose', default=False, type=bool, help="Detail info")
 parser.add_argument('--train_chunks', type=str, help="h5 file path for train dataset")
 parser.add_argument('--train_chunk_number', type=int, help="number of chunks in the folder")
 parser.add_argument('--val_h5', type=str, help="h5 file path for val dataset")
+parser.add_argument('--chunk_count', type=int, default=0, help="usable chunk count")
 
 
 def get_loss(output, target, index, device, gce_q_list, gce_k_list, gce_weight_list, cfg):
@@ -357,8 +358,14 @@ def run(args, val_h5_file):
     #     batch_size=cfg.train_batch_size, num_workers=args.num_workers,
     #     drop_last=True, shuffle=True)
     np_train_samples = None
-    with open(f'{args.train_chunks}/chexpert_dset_chunk_1.npy', 'rb') as f:
-        np_train_samples = np.load(f)
+    # with open(f'{args.train_chunks}/chexpert_dset_chunk_1.npy', 'rb') as f:
+    #     np_train_samples = np.load(f)
+    for i in range(args.chunk_count):
+        with open(f'{args.train_chunks}/chexpert_dset_chunk_{i+1}.npy', 'rb') as f:
+            if np_train_samples == None:
+                np_train_samples = np.load(f)
+            else:
+                np_train_samples = np.concatenate((np_train_samples, np.load(f)))
 
     dataloader_train = DataLoader(
         ImageDataset([np_train_samples, train_labels], cfg, mode='train'),
@@ -371,7 +378,7 @@ def run(args, val_h5_file):
         drop_last=False, shuffle=False)
     #dev_header = dataloader_dev.dataset._label_header
     dev_header = ['No_Finding','Enlarged_Cardiomediastinum','Cardiomegaly','Lung_Opacity','Lung_Lesion','Edema','Consolidation','Pneumonia','Atelectasis','Pneumothorax','Pleural_Effusion','Pleural_Other','Fracture','Support_Devices']
-    print('dataloaders are set...')
+    print(f'dataloaders are set. train count: {np_train_samples.shape[0]}')
     logging.info("[LOGGING TEST]: dataloaders are set...")
     summary_train = {'epoch': 0, 'step': 0}
     summary_dev = {'loss': float('inf'), 'acc': 0.0}
