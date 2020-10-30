@@ -17,17 +17,20 @@ class ImageDataset(Dataset):
         self._chunk_length = 14000
         
         if cfg.label_fill_type == 'zeros':
-            self._labels = x_lst[1]
             if mode == 'train':
                 self._labels = x_lst[1]['train_u_zeros']
+            else:
+                self._labels = x_lst[1]
         elif cfg.label_fill_type == 'ones':
-            self._labels = x_lst[2]
             if mode == 'train':
                 self._labels = x_lst[1]['train_u_ones']
+            else:
+                self._labels = x_lst[2]
         elif cfg.label_fill_type == 'random':
-            self._labels = x_lst[3]
             if mode == 'train':
                 self._labels = x_lst[1]['train_u_random']
+            else:
+                self._labels = x_lst[3]
         else:
             raise Exception(f'The label filling method namely [{cfg.label_fill_type}] is not implemented yet...')
 
