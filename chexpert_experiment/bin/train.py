@@ -268,7 +268,7 @@ def test_epoch(summary, cfg, args, model, dataloader):
         # different number of tasks
         for t in range(len(cfg.num_classes)):
 
-            loss_t, acc_t = get_loss(output, target, t, device, [],[],[]cfg)
+            loss_t, acc_t = get_loss(output, target, t, device, [],[],[],cfg)
             # AUC
             output_tensor = torch.sigmoid(
                 output[t].view(-1)).cpu().detach().numpy()
