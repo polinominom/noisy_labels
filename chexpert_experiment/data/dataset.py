@@ -14,14 +14,27 @@ class ImageDataset(Dataset):
         self._mode = mode
         self._images = x_lst[0]
         self._num_image = len(self._images)
+        self._chunk_length = 14000
+        self._chunk_id = None
+        
         if cfg.label_fill_type == 'zeros':
-            self._labels = x_lst[0]
-        elif cfg.label_fill_type == 'ones':
             self._labels = x_lst[1]
-        elif cfg.label_fill_type == 'random':
+            if mode == 'train':
+                self._labels = x_lst[1]['train_u_zeros']
+        elif cfg.label_fill_type == 'ones':
             self._labels = x_lst[2]
+            if mode == 'train':
+                self._labels = x_lst[1]['train_u_ones']
+        elif cfg.label_fill_type == 'random':
+            self._labels = x_lst[3]
+            if mode == 'train':
+                self._labels = x_lst[1]['train_u_random']
         else:
-            raise Exception('The label filling method namely [{}] is not implemented yet...')
+            raise Exception(f'The label filling method namely [{cfg.label_fill_type}] is not implemented yet...')
+
+       if mode == 'train':
+            self._all_labels = np.array(self._labels)
+            self._labels = self._labels[:self._num_image]
 
     def __len__(self):
         return self._num_image

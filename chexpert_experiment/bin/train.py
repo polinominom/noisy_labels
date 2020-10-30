@@ -45,11 +45,12 @@ parser.add_argument('--resume', default=0, type=int, help="If resume from "
 parser.add_argument('--logtofile', default=True, type=bool, help="Save log "
                     "in save_path/log.txt if set True")
 parser.add_argument('--verbose', default=False, type=bool, help="Detail info")
-parser.add_argument('--train_h5', type=str, help="h5 file path for train dataset")
+parser.add_argument('--train_chunks', type=str, help="h5 file path for train dataset")
+parser.add_argument('--train_chunk_number', type=int, help="number of chunks in the folder")
 parser.add_argument('--val_h5', type=str, help="h5 file path for val dataset")
 
 
-def get_loss(output, target, index, device, cfg):
+def get_loss(output, target, index, device, q_list, k_list, weight_list, cfg):
     if cfg.criterion == 'BCE':
         for num_class in cfg.num_classes:
             assert num_class == 1
@@ -70,7 +71,19 @@ def get_loss(output, target, index, device, cfg):
         label = torch.sigmoid(output[index].view(-1)).ge(0.5).float()
         acc = (target == label).float().sum() / len(label)
     if cfg.criterion == 'GCE':
-        raise Exception('GCE is not implemented yet...')
+        for num_class in cfg.num_classes:
+            assert num_class == 1
+        target = target[:, index].view(-1)
+        p = F.softmax(output, dim=1)
+        Yg = torch.gather(p, 1, torch.unsqueeze(target, 1))
+
+        loss = 0
+        for i, num_class in enumerate(cfg.num_classes):
+            q = q_list[i]
+            k = k_list[i]
+            yg =Yg[i]
+            x = ((1-(yg**q))/q)*weight[i][index] - ((1-(k**q))/q)*weight[i][index]
+            loss += torch.mean(x)
     else:
         raise Exception('Unknown criterion : {}'.format(cfg.criterion))
 
@@ -275,7 +288,7 @@ def test_epoch(summary, cfg, args, model, dataloader):
     return summary, predlist, true_list
 
 
-def run(args, train_h5_file, val_h5_file):
+def run(args, val_h5_file):
     with open(args.cfg_path) as f:
         cfg = edict(json.load(f))
         if args.verbose is True:
@@ -324,20 +337,34 @@ def run(args, train_h5_file, val_h5_file):
     #if rc != 0: raise Exception('copy folder error : {}'.format(err_msg))
     #copyfile(cfg.train_csv, os.path.join(args.save_path, 'train.csv'))
     #copyfile(cfg.dev_csv, os.path.join(args.save_path, 'dev.csv'))
-    np_train_h5_file = np.array(train_h5_file['train'][:10000], dtype=np.uint8)
-    np_t_u_ones = np.array(train_h5_file['train_u_ones'][:10000], dtype=np.int8)    
-    np_t_u_zeros = np.array(train_h5_file['train_u_zeros'][:10000], dtype=np.int8)
-    np_t_u_random = np.array(train_h5_file['train_u_random'][:10000], dtype=np.int8)
+    # np_train_h5_file = np.array(train_h5_file['train'][:10000], dtype=np.uint8)
+    # np_t_u_ones = np.array(train_h5_file['train_u_ones'][:10000], dtype=np.int8)    
+    # np_t_u_zeros = np.array(train_h5_file['train_u_zeros'][:10000], dtype=np.int8)
+    # np_t_u_random = np.array(train_h5_file['train_u_random'][:10000], dtype=np.int8)
 
     np_val_h5_file = np.array(val_h5_file['val'], dtype=np.uint8)
     np_v_u_ones = np.array(train_h5_file['val_u_ones'], dtype=np.int8)    
     np_v_u_zeros = np.array(train_h5_file['val_u_zeros'], dtype=np.int8)
     np_v_u_random = np.array(train_h5_file['val_u_random'], dtype=np.int8)
 
+    train_labels = {}
+    with h5py.File(f'{args.train_chunks}/train_labels.h5') as fp:
+        train_labels['train_u_ones'] = np.array(fp['train_u_ones'], dtype=np.int8)
+        train_labels['train_u_zeros'] = np.array(fp['train_u_zeros'], dtype=np.int8)
+        train_labels['train_u_random'] = np.array(fp['train_u_random'], dtype=np.int8)
+    # dataloader_train = DataLoader(
+    #     ImageDataset([np_train_h5_file, np_t_u_zeros, np_t_u_ones, np_t_u_random], cfg, mode='train'),
+    #     batch_size=cfg.train_batch_size, num_workers=args.num_workers,
+    #     drop_last=True, shuffle=True)
+    np_train_samples = None
+    with open(f'{args.train_chunks}/checkpert_dset_chunk_{epoch+1}.npy') as f:
+            np_train_samples = np.load(f)
+
     dataloader_train = DataLoader(
-        ImageDataset([np_train_h5_file, np_t_u_zeros, np_t_u_ones, np_t_u_random], cfg, mode='train'),
+        ImageDataset([np_train_samples, train_labels, chunk_id], cfg, mode='train'),
         batch_size=cfg.train_batch_size, num_workers=args.num_workers,
         drop_last=True, shuffle=True)
+
     dataloader_dev = DataLoader(
         ImageDataset([np_val_h5_file, np_v_u_zeros, np_v_u_ones, np_v_u_random], cfg, mode='val'),
         batch_size=cfg.dev_batch_size, num_workers=args.num_workers,
@@ -482,9 +509,8 @@ def main():
         print('Using the specified args:')
         print(args)
 
-    with h5py.File(args.train_h5, 'r') as train_h5:
-        with h5py.File(args.val_h5, 'r') as val_h5:
-            run(args, train_h5, val_h5)
+    with h5py.File(args.val_h5, 'r') as val_h5:
+        run(args, val_h5)
 
 
 if __name__ == '__main__':
