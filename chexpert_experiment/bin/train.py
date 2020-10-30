@@ -343,9 +343,9 @@ def run(args, val_h5_file):
     # np_t_u_random = np.array(train_h5_file['train_u_random'][:10000], dtype=np.int8)
 
     np_val_h5_file = np.array(val_h5_file['val'], dtype=np.uint8)
-    np_v_u_ones = np.array(train_h5_file['val_u_ones'], dtype=np.int8)    
-    np_v_u_zeros = np.array(train_h5_file['val_u_zeros'], dtype=np.int8)
-    np_v_u_random = np.array(train_h5_file['val_u_random'], dtype=np.int8)
+    np_v_u_ones = np.array(val_h5_file['val_u_ones'], dtype=np.int8)    
+    np_v_u_zeros = np.array(val_h5_file['val_u_zeros'], dtype=np.int8)
+    np_v_u_random = np.array(val_h5_file['val_u_random'], dtype=np.int8)
 
     train_labels = {}
     with h5py.File(f'{args.train_chunks}/train_labels.h5') as fp:
