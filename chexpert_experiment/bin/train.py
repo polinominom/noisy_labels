@@ -108,7 +108,7 @@ def train_epoch(summary, summary_dev, cfg, args, model, dataloader,
     for step in range(steps):
         image, target = next(dataiter)
         image = image.to(device)
-        target = target.to(device)
+        target = target.to(device, dtype=torch.cuda.float)
         output, logit_map = model(image)
 
         # different number of tasks
