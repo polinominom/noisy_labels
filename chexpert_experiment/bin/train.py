@@ -348,7 +348,7 @@ def run(args, val_h5_file):
     np_v_u_random = np.array(val_h5_file['val_u_random'], dtype=np.int8)
 
     train_labels = {}
-    with h5py.File(f'{args.train_chunks}/train_labels.h5') as fp:
+    with h5py.File(f'{args.train_chunks}/train_labels.h5','r') as fp:
         train_labels['train_u_ones'] = np.array(fp['train_u_ones'], dtype=np.int8)
         train_labels['train_u_zeros'] = np.array(fp['train_u_zeros'], dtype=np.int8)
         train_labels['train_u_random'] = np.array(fp['train_u_random'], dtype=np.int8)
@@ -357,8 +357,8 @@ def run(args, val_h5_file):
     #     batch_size=cfg.train_batch_size, num_workers=args.num_workers,
     #     drop_last=True, shuffle=True)
     np_train_samples = None
-    with open(f'{args.train_chunks}/chexpert_dset_chunk_1.npy') as f:
-            np_train_samples = np.load(f)
+    with open(f'{args.train_chunks}/chexpert_dset_chunk_1.npy', 'rb') as f:
+        np_train_samples = np.load(f)
 
     dataloader_train = DataLoader(
         ImageDataset([np_train_samples, train_labels, chunk_id], cfg, mode='train'),
