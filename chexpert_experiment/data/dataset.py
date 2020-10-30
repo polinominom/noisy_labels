@@ -15,7 +15,6 @@ class ImageDataset(Dataset):
         self._images = x_lst[0]
         self._num_image = len(self._images)
         self._chunk_length = 14000
-        self._chunk_id = None
         
         if cfg.label_fill_type == 'zeros':
             self._labels = x_lst[1]
@@ -31,7 +30,7 @@ class ImageDataset(Dataset):
                 self._labels = x_lst[1]['train_u_random']
         else:
             raise Exception(f'The label filling method namely [{cfg.label_fill_type}] is not implemented yet...')
-        
+
         if mode == 'train':
             self._all_labels = np.array(self._labels)
             self._labels = self._labels[:self._num_image]

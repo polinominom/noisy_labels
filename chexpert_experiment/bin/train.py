@@ -361,7 +361,7 @@ def run(args, val_h5_file):
         np_train_samples = np.load(f)
 
     dataloader_train = DataLoader(
-        ImageDataset([np_train_samples, train_labels, chunk_id], cfg, mode='train'),
+        ImageDataset([np_train_samples, train_labels], cfg, mode='train'),
         batch_size=cfg.train_batch_size, num_workers=args.num_workers,
         drop_last=True, shuffle=True)
 
