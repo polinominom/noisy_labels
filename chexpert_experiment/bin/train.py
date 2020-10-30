@@ -362,11 +362,11 @@ def run(args, val_h5_file):
     #     np_train_samples = np.load(f)
     for i in range(args.chunk_count):
         with open(f'{args.train_chunks}/chexpert_dset_chunk_{i+1}.npy', 'rb') as f:
-            if np_train_samples == None:
+            if np_train_samples is None:
                 np_train_samples = np.load(f)
             else:
                 np_train_samples = np.concatenate((np_train_samples, np.load(f)))
-
+    
     dataloader_train = DataLoader(
         ImageDataset([np_train_samples, train_labels], cfg, mode='train'),
         batch_size=cfg.train_batch_size, num_workers=args.num_workers,
