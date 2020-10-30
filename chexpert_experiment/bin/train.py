@@ -262,8 +262,8 @@ def test_epoch(summary, cfg, args, model, dataloader):
     true_list = list(x for x in range(len(cfg.num_classes)))
     for step in range(steps):
         image, target = next(dataiter)
-        image = image.to(device)
-        target = target.to(device)
+        image = image.to(device).float()
+        target = target.to(device).float()
         output, logit_map = model(image)
         # different number of tasks
         for t in range(len(cfg.num_classes)):
