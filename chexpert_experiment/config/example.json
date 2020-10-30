@@ -1,7 +1,7 @@
 {
     "train_csv": "/home/cagri/noisy_labels/chexpert_experiment/config/train.csv",
     "dev_csv": "/home/cagri/noisy_labels/chexpert_experiment/config/dev.csv",
-    "label_fill_type":"zeros",
+    "label_fill_type":"ones",
     "backbone": "densenet121",
     "width": 320,
     "height": 320,
