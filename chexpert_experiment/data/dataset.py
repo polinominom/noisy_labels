@@ -31,8 +31,8 @@ class ImageDataset(Dataset):
                 self._labels = x_lst[1]['train_u_random']
         else:
             raise Exception(f'The label filling method namely [{cfg.label_fill_type}] is not implemented yet...')
-
-       if mode == 'train':
+        
+        if mode == 'train':
             self._all_labels = np.array(self._labels)
             self._labels = self._labels[:self._num_image]
 
