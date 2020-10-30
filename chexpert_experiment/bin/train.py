@@ -357,7 +357,7 @@ def run(args, val_h5_file):
     #     batch_size=cfg.train_batch_size, num_workers=args.num_workers,
     #     drop_last=True, shuffle=True)
     np_train_samples = None
-    with open(f'{args.train_chunks}/checkpert_dset_chunk_{epoch+1}.npy') as f:
+    with open(f'{args.train_chunks}/checkpert_dset_chunk_1.npy') as f:
             np_train_samples = np.load(f)
 
     dataloader_train = DataLoader(
