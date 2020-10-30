@@ -50,7 +50,7 @@ parser.add_argument('--train_chunk_number', type=int, help="number of chunks in 
 parser.add_argument('--val_h5', type=str, help="h5 file path for val dataset")
 
 
-def get_loss(output, target, index, device, q_list, k_list, weight_list, cfg):
+def get_loss(output, target, index, device, gce_q_list, gce_k_list, gce_weight_list, cfg):
     if cfg.criterion == 'BCE':
         for num_class in cfg.num_classes:
             assert num_class == 1
@@ -79,8 +79,8 @@ def get_loss(output, target, index, device, q_list, k_list, weight_list, cfg):
 
         loss = 0
         for i, num_class in enumerate(cfg.num_classes):
-            q = q_list[i]
-            k = k_list[i]
+            q = gce_q_list[i]
+            k = gce_k_list[i]
             yg =Yg[i]
             x = ((1-(yg**q))/q)*weight[i][index] - ((1-(k**q))/q)*weight[i][index]
             loss += torch.mean(x)
@@ -114,7 +114,7 @@ def train_epoch(summary, summary_dev, cfg, args, model, dataloader,
         # different number of tasks
         loss = 0
         for t in range(num_tasks):
-            loss_t, acc_t = get_loss(output, target, t, device, cfg)
+            loss_t, acc_t = get_loss(output, target, t, device, [],[],[] cfg)
             loss += loss_t
             loss_sum[t] += loss_t.item()
             acc_sum[t] += acc_t.item()
@@ -268,7 +268,7 @@ def test_epoch(summary, cfg, args, model, dataloader):
         # different number of tasks
         for t in range(len(cfg.num_classes)):
 
-            loss_t, acc_t = get_loss(output, target, t, device, cfg)
+            loss_t, acc_t = get_loss(output, target, t, device, [],[],[]cfg)
             # AUC
             output_tensor = torch.sigmoid(
                 output[t].view(-1)).cpu().detach().numpy()
