@@ -114,7 +114,7 @@ def train_epoch(summary, summary_dev, cfg, args, model, dataloader,
         # different number of tasks
         loss = 0
         for t in range(num_tasks):
-            loss_t, acc_t = get_loss(output, target, t, device, [],[],[] cfg)
+            loss_t, acc_t = get_loss(output, target, t, device, [],[],[], cfg)
             loss += loss_t
             loss_sum[t] += loss_t.item()
             acc_sum[t] += acc_t.item()
