@@ -70,7 +70,7 @@ def get_loss(output, target, index, device, gce_q_list, gce_k_list, gce_weight_l
 
         label = torch.sigmoid(output[index].view(-1)).ge(0.5).float()
         acc = (target == label).float().sum() / len(label)
-    if cfg.criterion == 'GCE':
+    elif cfg.criterion == 'GCE':
         for num_class in cfg.num_classes:
             assert num_class == 1
         target = target[:, index].view(-1)
