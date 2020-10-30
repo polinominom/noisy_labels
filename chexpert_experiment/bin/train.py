@@ -370,7 +370,7 @@ def run(args, val_h5_file):
         batch_size=cfg.dev_batch_size, num_workers=args.num_workers,
         drop_last=False, shuffle=False)
     #dev_header = dataloader_dev.dataset._label_header
-    dev_header = ['No Finding','Enlarged Cardiomediastinum','Cardiomegaly','Lung Opacity','Lung Lesion','Edema','Consolidation','Pneumonia','Atelectasis','Pneumothorax','Pleural Effusion','Pleural Other','Fracture','Support Devices']
+    dev_header = ['No_Finding','Enlarged_Cardiomediastinum','Cardiomegaly','Lung_Opacity','Lung_Lesion','Edema','Consolidation','Pneumonia','Atelectasis','Pneumothorax','Pleural_Effusion','Pleural_Other','Fracture','Support_Devices']
     print('dataloaders are set...')
     logging.info("[LOGGING TEST]: dataloaders are set...")
     summary_train = {'epoch': 0, 'step': 0}

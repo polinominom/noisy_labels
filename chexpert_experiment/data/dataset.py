@@ -48,7 +48,7 @@ class ImageDataset(Dataset):
         labels = np.array(self._labels[idx]).astype(np.float32)
 
         path = None
-        if self._mode == 'train' or self._mode == 'dev':
+        if self._mode == 'train' or self._mode == 'dev' or self._mode=='val':
             return (image, labels)
         elif self._mode == 'test':
             return (image, path)
