@@ -50,7 +50,6 @@ parser.add_argument('--train_chunk_number', type=int, help="number of chunks in 
 parser.add_argument('--val_h5', type=str, help="h5 file path for val dataset")
 parser.add_argument('--chunk_count', type=int, default=0, help="usable chunk count")
 
-
 def get_loss(output, target, index, device, gce_q_list, gce_k_list, gce_weight_list, cfg):
     if cfg.criterion == 'BCE':
         for num_class in cfg.num_classes:
@@ -66,12 +65,12 @@ def get_loss(output, target, index, device, gce_q_list, gce_k_list, gce_weight_l
                 loss = F.binary_cross_entropy_with_logits(
                     output[index].view(-1), target, pos_weight=weight)
         else:
-            loss = F.binary_cross_entropy_with_logits(
-                output[index].view(-1), target, pos_weight=pos_weight[index])
+            loss = F.binary_cross_entropy_with_logits(output[index].view(-1), target, pos_weight=pos_weight[index])
 
         label = torch.sigmoid(output[index].view(-1)).ge(0.5).float()
         acc = (target == label).float().sum() / len(label)
     elif cfg.criterion == 'GCE':
+        #torch.nn.Parameter(data=torch.ones(trainset_size, 1), requires_grad=False)
         for num_class in cfg.num_classes:
             assert num_class == 1
         target = target[:, index].view(-1)
@@ -82,18 +81,21 @@ def get_loss(output, target, index, device, gce_q_list, gce_k_list, gce_weight_l
         for i, num_class in enumerate(cfg.num_classes):
             q = gce_q_list[i]
             k = gce_k_list[i]
+            #w = gce_weight_list[i]
             yg =Yg[i]
-            x = ((1-(yg**q))/q)*weight[i][index] - ((1-(k**q))/q)*weight[i][index]
+            x = ((1-(yg**q))/q) - ((1-(k**q))/q)
             loss += torch.mean(x)
+
+        loss = loss/num_class
+        acc  = (target == label).float().sum() / len(label)
     else:
         raise Exception('Unknown criterion : {}'.format(cfg.criterion))
 
     return (loss, acc)
 
-
 def train_epoch(summary, summary_dev, cfg, args, model, dataloader,
                 dataloader_dev, optimizer, summary_writer, best_dict,
-                dev_header):
+                dev_header, q_list, k_list):
     torch.set_grad_enabled(True)
     model.train()
     device_ids = list(map(int, args.device_ids.split(',')))
@@ -115,7 +117,7 @@ def train_epoch(summary, summary_dev, cfg, args, model, dataloader,
         # different number of tasks
         loss = 0
         for t in range(num_tasks):
-            loss_t, acc_t = get_loss(output, target, t, device, [],[],[], cfg)
+            loss_t, acc_t = get_loss(output, target, t, device, q_list, k_list, [], cfg)
             loss += loss_t
             loss_sum[t] += loss_t.item()
             acc_sum[t] += acc_t.item()
@@ -247,7 +249,7 @@ def train_epoch(summary, summary_dev, cfg, args, model, dataloader,
     return summary, best_dict
 
 
-def test_epoch(summary, cfg, args, model, dataloader):
+def test_epoch(summary, cfg, args, model, dataloader, q_list, k_list):
     torch.set_grad_enabled(False)
     model.eval()
     device_ids = list(map(int, args.device_ids.split(',')))
@@ -269,7 +271,7 @@ def test_epoch(summary, cfg, args, model, dataloader):
         # different number of tasks
         for t in range(len(cfg.num_classes)):
 
-            loss_t, acc_t = get_loss(output, target, t, device, [],[],[],cfg)
+            loss_t, acc_t = get_loss(output, target, t, device, q_list,k_list,[],cfg)
             # AUC
             output_tensor = torch.sigmoid(
                 output[t].view(-1)).cpu().detach().numpy()
@@ -401,6 +403,12 @@ def run(args, val_h5_file):
         best_dict['auc_dev_best'] = ckpt['auc_dev_best']
         epoch_start = ckpt['epoch']
 
+    q_list = []
+    k_list = []
+    for i in range(len(cfg.num_classes)):
+        q_list.append(0.7)
+        k_list.append(0.5)
+    
     print('Everything is set starting to train...')
     for epoch in range(epoch_start, cfg.epoch):
         lr = lr_schedule(cfg.lr, cfg.lr_factor, summary_train['epoch'],
@@ -411,11 +419,11 @@ def run(args, val_h5_file):
         summary_train, best_dict = train_epoch(
             summary_train, summary_dev, cfg, args, model,
             dataloader_train, dataloader_dev, optimizer,
-            summary_writer, best_dict, dev_header)
+            summary_writer, best_dict, dev_header, q_list, k_list)
 
         time_now = time.time()
         summary_dev, predlist, true_list = test_epoch(
-            summary_dev, cfg, args, model, dataloader_dev)
+            summary_dev, cfg, args, model, dataloader_dev, q_list, k_list)
         time_spent = time.time() - time_now
 
         auclist = []
