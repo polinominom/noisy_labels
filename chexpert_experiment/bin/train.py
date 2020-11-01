@@ -79,8 +79,7 @@ def get_loss(output, target, index, device, gce_q_list, gce_k_list, gce_weight_l
         #print(Yg)
         q = gce_q_list[index]
         k = gce_k_list[index]
-        yg =Yg[index]
-        x = ((1-(yg**q))/q) - ((1-(k**q))/q)
+        x = ((1-(Yg**q))/q) - ((1-(k**q))/q)
         loss = torch.mean(x)
         acc  = (target == label).float().sum() / len(label)
     else:
