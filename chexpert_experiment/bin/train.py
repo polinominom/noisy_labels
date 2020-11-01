@@ -153,7 +153,7 @@ def train_epoch(summary, summary_dev, cfg, args, model, dataloader,
         if summary['step'] % cfg.test_every == 0:
             time_now = time.time()
             summary_dev, predlist, true_list = test_epoch(
-                summary_dev, cfg, args, model, dataloader_dev)
+                summary_dev, cfg, args, model, dataloader_dev,q_list,k_list)
             time_spent = time.time() - time_now
 
             auclist = []
