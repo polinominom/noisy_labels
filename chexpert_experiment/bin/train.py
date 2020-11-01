@@ -74,7 +74,10 @@ def get_loss(output, target, index, device, gce_q_list, gce_k_list, gce_weight_l
         for num_class in cfg.num_classes:
             assert num_class == 1
         target = target[:, index].view(-1)
-        p = F.softmax(output, dim=1)
+
+        no = np.array(output)
+        print('no: '+no.shape)
+        p = F.softmax(no, dim=1)
         Yg = torch.gather(p, 1, torch.unsqueeze(target, 1))
 
         loss = 0
