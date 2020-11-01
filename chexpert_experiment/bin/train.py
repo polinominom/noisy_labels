@@ -75,6 +75,7 @@ def get_loss(output, target, index, device, gce_q_list, gce_k_list, gce_weight_l
             assert num_class == 1
         target = target[:, index].view(-1)
 
+        print(output)
         Yg = torch.FloatTensor(output)
         #Yg = torch.gather(p, 1, torch.unsqueeze(target, 1))
         #print(Yg)
