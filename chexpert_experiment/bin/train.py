@@ -75,11 +75,9 @@ def get_loss(output, target, index, device, gce_q_list, gce_k_list, gce_weight_l
             assert num_class == 1
         target = target[:, index].view(-1)
 
-        no = np.array(output)
-        print(f'no: {no.shape}')
-        p = F.softmax(no, dim=1)
+        p = torch.FloatTensor(output)
         Yg = torch.gather(p, 1, torch.unsqueeze(target, 1))
-
+        print(Yg)
         loss = 0
         for i, num_class in enumerate(cfg.num_classes):
             q = gce_q_list[i]
