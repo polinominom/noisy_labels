@@ -81,6 +81,7 @@ def get_loss(output, target, index, device, gce_q_list, gce_k_list, gce_weight_l
         k = gce_k_list[index]
         x = ((1-(Yg**q))/q) - ((1-(k**q))/q)
         loss = torch.mean(x)
+        label = torch.sigmoid(output[index].view(-1)).ge(0.5).float()
         acc  = (target == label).float().sum() / len(label)
     else:
         raise Exception('Unknown criterion : {}'.format(cfg.criterion))
