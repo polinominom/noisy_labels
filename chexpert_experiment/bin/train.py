@@ -76,7 +76,7 @@ def get_loss(output, target, index, device, gce_q_list, gce_k_list, gce_weight_l
         target = target[:, index].view(-1)
 
         no = np.array(output)
-        print('no: '+no.shape)
+        print(f'no: {no.shape}')
         p = F.softmax(no, dim=1)
         Yg = torch.gather(p, 1, torch.unsqueeze(target, 1))
 
