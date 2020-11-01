@@ -55,8 +55,7 @@ def get_loss(output, target, index, device, gce_q_list, gce_k_list, gce_weight_l
         for num_class in cfg.num_classes:
             assert num_class == 1
         target = target[:, index].view(-1)
-        pos_weight = torch.from_numpy(
-            np.array(cfg.pos_weight, dtype=np.float32)).to(device).type_as(target)
+        pos_weight = torch.from_numpy(np.array(cfg.pos_weight, dtype=np.float32)).to(device).type_as(target)
         if cfg.batch_weight:
             if target.sum() == 0:
                 loss = torch.tensor(0., requires_grad=True).to(device)
@@ -74,21 +73,15 @@ def get_loss(output, target, index, device, gce_q_list, gce_k_list, gce_weight_l
         for num_class in cfg.num_classes:
             assert num_class == 1
         target = target[:, index].view(-1)
-
-        print(output)
-        Yg = torch.FloatTensor(output)
+        pos_weight = torch.from_numpy(np.array(cfg.pos_weight, dtype=np.float32)).to(device).type_as(target)
+        Yg = F.binary_cross_entropy_with_logits(output[index].view(-1), target, pos_weight=pos_weight[index])
         #Yg = torch.gather(p, 1, torch.unsqueeze(target, 1))
         #print(Yg)
-        loss = 0
-        for i, num_class in enumerate(cfg.num_classes):
-            q = gce_q_list[i]
-            k = gce_k_list[i]
-            #w = gce_weight_list[i]
-            yg =Yg[i]
-            x = ((1-(yg**q))/q) - ((1-(k**q))/q)
-            loss += torch.mean(x)
-
-        loss = loss/num_class
+        q = gce_q_list[index]
+        k = gce_k_list[index]
+        yg =Yg[index]
+        x = ((1-(yg**q))/q) - ((1-(k**q))/q)
+        loss = torch.mean(x)
         acc  = (target == label).float().sum() / len(label)
     else:
         raise Exception('Unknown criterion : {}'.format(cfg.criterion))
