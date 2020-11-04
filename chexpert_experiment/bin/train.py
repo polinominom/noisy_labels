@@ -74,13 +74,15 @@ def get_loss(output, target, index, device, gce_q_list, gce_k_list, gce_weight_l
             assert num_class == 1
         target = target[:, index].view(-1)
         pos_weight = torch.from_numpy(np.array(cfg.pos_weight, dtype=np.float32)).to(device).type_as(target)
-        Yg = F.binary_cross_entropy_with_logits(output[index].view(-1), target, pos_weight=pos_weight[index])
-        #Yg = torch.gather(p, 1, torch.unsqueeze(target, 1))
-        #print(Yg)
+        
+        output_sigmoid = torch.sigmoid(output[index].view(-1))
         q = gce_q_list[index]
         k = gce_k_list[index]
-        x = abs(((1-(Yg**q))/q) - ((1-(k**q))/q))
-        loss = torch.mean(x)
+        batch_loss = torch.empty(output_sigmoid.shape[0])
+        for i, fj in enumerate(output_sigmoid):
+            value = torch.max(torch.FloatTensor([fj, k]))
+            batch_loss[i] = (1-(value**q))/q
+        loss = torch.mean(batch_loss)
         label = torch.sigmoid(output[index].view(-1)).ge(0.5).float()
         acc  = (target == label).float().sum() / len(label)
     else:
@@ -402,7 +404,10 @@ def run(args, val_h5_file):
     k_list = []
     for i in range(len(cfg.num_classes)):
         q_list.append(0.7)
-        k_list.append(0.5)
+        k_list.append(0.3)
+
+    k_list = torch.FloatTensor(k_list)
+    q_list = torch.FloatTensor(q_list)
     
     print('Everything is set starting to train...')
     for epoch in range(epoch_start, cfg.epoch):
