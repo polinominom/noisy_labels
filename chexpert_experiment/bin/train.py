@@ -74,21 +74,18 @@ def get_loss(output, target, index, device, gce_q_list, gce_k_list, gce_weight_l
             assert num_class == 1
         target = target[:, index].view(-1)
         pos_weight = torch.from_numpy(np.array(cfg.pos_weight, dtype=np.float32)).to(device).type_as(target)
-        
-        output_sigmoid = torch.sigmoid(output[index].view(-1))
+
         q = gce_q_list[index]
         k = gce_k_list[index]
-        batch_loss = torch.empty(output_sigmoid.shape[0])
-        for i, fj in enumerate(output_sigmoid):
-            value = torch.max(torch.FloatTensor([fj, k]))
-            batch_loss[i] = (1-(value**q))/q
-        loss = torch.mean(batch_loss)
+        
+        output_sigmoid = torch.sigmoid(output[index].view(-1))
+        loss = torch.mean( (1 - (output_sigmoid.max(k)**q) ) / q)
         label = torch.sigmoid(output[index].view(-1)).ge(0.5).float()
         acc  = (target == label).float().sum() / len(label)
     else:
         raise Exception('Unknown criterion : {}'.format(cfg.criterion))
 
-    return (loss, acc)
+    return (loss, acc)  
 
 def train_epoch(summary, summary_dev, cfg, args, model, dataloader,
                 dataloader_dev, optimizer, summary_writer, best_dict,
