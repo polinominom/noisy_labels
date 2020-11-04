@@ -50,7 +50,7 @@ parser.add_argument('--train_chunk_number', type=int, help="number of chunks in 
 parser.add_argument('--val_h5', type=str, help="h5 file path for val dataset")
 parser.add_argument('--chunk_count', type=int, default=0, help="usable chunk count")
 
-def get_loss(output, target, index, device, gce_q_list, gce_k_list, gce_weight_list, cfg):
+def get_loss(output, target, index, device, gce_q_list, gce_k_list, gce_weight_list, cfg, device):
     if cfg.criterion == 'BCE':
         for num_class in cfg.num_classes:
             assert num_class == 1
@@ -77,9 +77,9 @@ def get_loss(output, target, index, device, gce_q_list, gce_k_list, gce_weight_l
 
         q = gce_q_list[index]
         k = gce_k_list[index]
-        
+
         output_sigmoid = torch.sigmoid(output[index].view(-1))
-        loss = torch.mean( (1 - (output_sigmoid.max(k)**q) ) / q)
+        loss = torch.mean( (1 - (output_sigmoid.cpu().max(k)**q) ) / q).to(device)
         label = torch.sigmoid(output[index].view(-1)).ge(0.5).float()
         acc  = (target == label).float().sum() / len(label)
     else:
@@ -111,7 +111,7 @@ def train_epoch(summary, summary_dev, cfg, args, model, dataloader,
         # different number of tasks
         loss = 0
         for t in range(num_tasks):
-            loss_t, acc_t = get_loss(output, target, t, device, q_list, k_list, [], cfg)
+            loss_t, acc_t = get_loss(output, target, t, device, q_list, k_list, [], cfg, device)
             loss += loss_t
             loss_sum[t] += loss_t.item()
             acc_sum[t] += acc_t.item()
@@ -265,7 +265,7 @@ def test_epoch(summary, cfg, args, model, dataloader, q_list, k_list):
         # different number of tasks
         for t in range(len(cfg.num_classes)):
 
-            loss_t, acc_t = get_loss(output, target, t, device, q_list,k_list,[],cfg)
+            loss_t, acc_t = get_loss(output, target, t, device, q_list,k_list,[],cfg, device)
             # AUC
             output_tensor = torch.sigmoid(
                 output[t].view(-1)).cpu().detach().numpy()
