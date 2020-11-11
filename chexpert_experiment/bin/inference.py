@@ -144,12 +144,12 @@ def make_validation(feature, total_label, sample_mean, inverse_covariance, num_c
         for i in range(num_classes):
             batch_sample_mean = sample_mean[i]
             zero_f = temp_feature - batch_sample_mean
-            term_gau = -0.5*torch.mm(torch.mm(zero_f, inverse_covariance), zero_f.t()).diag()
+            term_gau = -0.5*torch.mm(torch.mm(zero_f.cuda(), inverse_covariance.cuda()), zero_f.t().cuda()).diag()
             if i == 0:
                 gaussian_score = term_gau.view(-1,1)
             else:
                 gaussian_score = torch.cat((gaussian_score, term_gau.view(-1,1)), 1)
-        generative_out = torch.index_select(gaussian_score, 1, torch.LongTensor(list(range(13)))).diag()
+        generative_out = torch.index_select(gaussian_score.cpu(), 1, torch.LongTensor(list(range(13)))).diag()
         # concat data
         if total == 0:
             mahalanobis_score = generative_out
