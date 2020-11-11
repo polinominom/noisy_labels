@@ -166,7 +166,7 @@ def train_weights(G_soft_list, total_val_data, total_val_label, batch_size):
     nllloss = F.binary_cross_entropy_with_logits
     # parameyer
     num_ensemble = len(G_soft_list)
-    train_weights = torch.Tensor(num_ensemble, 1).fill_(1).cuda()
+    train_weights = torch.Tensor(num_ensemble, 1).fill_(1).cpu()
     train_weights = nn.Parameter(train_weights)
     total, correct_D = 0, 0
     optimizer = optim.Adam([train_weights], lr=0.02)
@@ -174,13 +174,12 @@ def train_weights(G_soft_list, total_val_data, total_val_label, batch_size):
     total_num_data = total_val_data[0].size(0)
 
     for data_index in range(int(np.floor(total_num_data/batch_size))):
-        target = total_val_label[total : total + batch_size].cuda()
-        target = Variable(target)
+        target = total_val_label[total : total + batch_size].cpu()
         soft_weight = F.softmax(train_weights, dim=0)
         total_out = 0
 
         for i in range(num_ensemble):
-            out_features = total_val_data[i][total : total + batch_size].cuda()
+            out_features = total_val_data[i][total : total + batch_size].cpu()
             feature_dim = out_features.size(1)
             output = F.softmax(G_soft_list[i](out_features) , dim=1)
             if i == 0:
@@ -190,7 +189,7 @@ def train_weights(G_soft_list, total_val_data, total_val_label, batch_size):
                 
         total += batch_size
         pred = torch.sigmoid(total_out).ge(0.5).float()
-        equal_flag = pred.eq(target.data.float()).cuda()
+        equal_flag = pred.eq(target.data.float()).cpu()
         correct_D += equal_flag.sum()
             
     for epoch in range(total_epoch):
@@ -199,7 +198,7 @@ def train_weights(G_soft_list, total_val_data, total_val_label, batch_size):
 
         for data_index in range(int(np.floor(total_num_data/batch_size))):
             index = shuffler_idx[total : total + batch_size]
-            target = torch.index_select(total_val_label, 0, index).cuda()
+            target = torch.index_select(total_val_label, 0, index).cpu()
             target = Variable(target)
             total += batch_size
 
@@ -209,7 +208,7 @@ def train_weights(G_soft_list, total_val_data, total_val_label, batch_size):
 
                 total_out = 0
                 for i in range(num_ensemble):
-                    out_features = torch.index_select(total_val_data[i], 0, index).cuda()
+                    out_features = torch.index_select(total_val_data[i], 0, index).cpu()
                     out_features = Variable(out_features)
                     feature_dim = out_features.size(1)
                     output = F.softmax(G_soft_list[i](out_features) , dim=1)
@@ -229,18 +228,15 @@ def train_weights(G_soft_list, total_val_data, total_val_label, batch_size):
     correct_D, total = 0, 0
     
     for data_index in range(int(np.floor(total_num_data/batch_size))):
-        target = total_val_label[total : total + batch_size].cuda()
-        target = Variable(target)
+        target = total_val_label[total : total + batch_size].cpu()
         soft_weight = F.softmax(train_weights, dim=0)
         total_out = 0
 
         for i in range(num_ensemble):
-            out_features = total_val_data[i][total : total + batch_size].cuda()
+            out_features = total_val_data[i][total : total + batch_size].cpu()
             out_features = Variable(out_features, volatile=True)
             feature_dim = out_features.size(1)
             output = F.softmax(G_soft_list[i](out_features) , dim=1)
-                
-            output = Variable(output.data, volatile=True)
             if i == 0:
                 total_out = soft_weight[i]*output
             else:
@@ -248,7 +244,7 @@ def train_weights(G_soft_list, total_val_data, total_val_label, batch_size):
                 
         total += batch_size
         pred = torch.sigmoid(total_out).ge(0.5).float()
-        equal_flag = pred.eq(target.data.float()).cuda()
+        equal_flag = pred.eq(target.data.float()).cpu()
         correct_D += equal_flag.sum()
         
     soft_weight = F.softmax(train_weights, dim=0)
