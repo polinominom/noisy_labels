@@ -46,7 +46,9 @@ class ImageDataset(Dataset):
         image = Image.fromarray(im)
         if self._mode == 'train':
             image = GetTransforms(image, type=self.cfg.use_transforms_type)
-        image = np.array(image)
+            image = np.array(image)
+        else:
+            image = im
         image = transform(image, self.cfg)
         labels = np.array(self._labels[idx]).astype(np.float32)
 
