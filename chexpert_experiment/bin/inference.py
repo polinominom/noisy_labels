@@ -77,7 +77,7 @@ def random_sample_mean(feature, total_label, num_classes):
             else:
                 X = torch.cat((X,temp_feature.transpose(0,1)),0)
             # find inverse            
-        group_lasso.fit(X.cuda().numpy())
+        group_lasso.fit(X.cpu().numpy())
         inv_sample_conv = group_lasso.covariance_
         inv_sample_conv = torch.from_numpy(inv_sample_conv).float()
         if i == 0:
@@ -127,7 +127,7 @@ def MCD_single(feature, sample_mean, inverse_covariance, batch_size):
         else:
             X = torch.cat((X, temp_feature.transpose(0,1)),0)
     # find inverse            
-    group_lasso.fit(X.cuda().numpy())
+    group_lasso.fit(X.cpu().numpy())
     new_sample_cov = group_lasso.covariance_
     
     return new_sample_mean, new_sample_cov, selected_idx
