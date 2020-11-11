@@ -508,23 +508,25 @@ elif args.mode == 'run':
     target_precision = new_sample_precision_list
     for i in range(len(new_sample_mean_list)):
         dim_feature = new_sample_mean_list[i].size(1)
-        sample_w = torch.mm(target_mean[i], target_precision[i])
-        sample_b = -0.5*torch.mm(torch.mm(target_mean[i], target_precision[i]), target_mean[i].t()).diag() + torch.Tensor(num_classes).fill_(np.log(1./num_classes)).cuda()
+        sample_w = torch.mm(target_mean[i].cuda(), target_precision[i].cuda())
+        sample_b = -0.5*torch.mm(torch.mm(target_mean[i].cuda(), target_precision[i].cuda()), target_mean[i].t().cuda()).diag() + torch.Tensor(num_classes).fill_(np.log(1./num_classes)).cuda()
         G_soft_layer = nn.Linear(int(dim_feature), num_classes).cuda()
         G_soft_layer.weight.data.copy_(sample_w)
         G_soft_layer.bias.data.copy_(sample_b)
-        G_soft_list.append(G_soft_layer)
+        G_soft_list.append(G_soft_layer.cpu())
 
+    print('using small val (100)...')
     sel_index = -1
     selected_list = make_validation(test_data_val, inference_test_data_val_labels, 
                                     target_mean[sel_index], target_precision[sel_index], num_classes, args.batch_size)
+    
     new_val_data_list = []
     for i in range(len(new_sample_mean_list)):
         # tese should stay CPU()
         new_val_data = torch.index_select(test_val_data_list[i], 0, selected_list.cpu())
         new_val_label = torch.index_select(inference_test_data_val_labels, 0, selected_list.cpu())
         new_val_data_list.append(new_val_data)
-            
+    print('Finding softweights...')
     soft_weight = train_weights(G_soft_list, new_val_data_list, new_val_label, args.batch_size)
     #
     soft_acc = test_softmax(model, np_dev_h5_file, inference_test_data_test_labels, args.batch_size)
