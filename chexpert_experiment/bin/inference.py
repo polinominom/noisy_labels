@@ -338,8 +338,7 @@ def extract_features(device, model, dataloader, batch_size, file_root, data_name
             print_remaining_time(before, step+1, steps, additional='[extract_features]')
             
         file_name_data = '%s/%s_feature_%s.npy' % (file_root, data_name, str(1))
-        total_feature = total_final_feature.numpy()
-        np.save(file_name_data , total_feature)
+        np.save(file_name_data , total_final_feature.cpu().numpy())
 def log_result(args, softmax_result, rog_result):
     #auc?
     contents = os.listdir('./chexpert_experiment')
