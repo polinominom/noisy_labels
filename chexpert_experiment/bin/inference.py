@@ -367,7 +367,7 @@ batch_size = args.batch_size
 with open(args.cfg_path) as f:
     cfg = edict(json.load(f))
 
-layer_list = list(range(num_output))
+#layer_list = list(range(num_output))
 
 torch.cuda.manual_seed(0)
 torch.cuda.set_device(args.gpu)
