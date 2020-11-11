@@ -285,11 +285,11 @@ def test_ensemble(G_soft_list, soft_weight, total_val_data, total_val_label, bat
         iteration_count = int(np.floor(total_num_data/batch_size))
         before = datetime.datetime.now()
         for data_index in range(iteration_count):
-            target = total_val_label[total : total + batch_size].cuda()
+            target = total_val_label[total : total + batch_size].cpu()
             total_out = 0
 
             for i in range(num_output):
-                out_features = total_val_data[i][total : total + batch_size].cuda()
+                out_features = total_val_data[i][total : total + batch_size].cpu()
                 feature_dim = out_features.size(1)
                 output = F.softmax(G_soft_list[i](out_features.cpu()), dim=1)
                 if i == 0:
@@ -299,7 +299,7 @@ def test_ensemble(G_soft_list, soft_weight, total_val_data, total_val_label, bat
                     
             total += batch_size
             pred = torch.sigmoid(total_out).ge(0.5).float()
-            equal_flag = pred.eq(target.data.float()).cuda()
+            equal_flag = pred.eq(target.data.float()).cpu()
             correct_D += equal_flag.sum() / num_clases
             print_remaining_time(before, data_index + 1, iteration_count, additional='[test_ensemble]')
         return 100. * correct_D / total
