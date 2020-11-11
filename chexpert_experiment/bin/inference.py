@@ -199,7 +199,7 @@ def train_weights(G_soft_list, total_val_data, total_val_label, batch_size):
         for data_index in range(int(np.floor(total_num_data/batch_size))):
             index = shuffler_idx[total : total + batch_size]
             target = torch.index_select(total_val_label, 0, index).cpu()
-            target = Variable(target)
+            #target = Variable(target)
             total += batch_size
 
             def closure():
@@ -209,7 +209,7 @@ def train_weights(G_soft_list, total_val_data, total_val_label, batch_size):
                 total_out = 0
                 for i in range(num_ensemble):
                     out_features = torch.index_select(total_val_data[i], 0, index).cpu()
-                    out_features = Variable(out_features)
+                    #out_features = Variable(out_features)
                     feature_dim = out_features.size(1)
                     output = F.softmax(G_soft_list[i](out_features) , dim=1)
                     
@@ -234,7 +234,7 @@ def train_weights(G_soft_list, total_val_data, total_val_label, batch_size):
 
         for i in range(num_ensemble):
             out_features = total_val_data[i][total : total + batch_size].cpu()
-            out_features = Variable(out_features, volatile=True)
+            #out_features = Variable(out_features, volatile=True)
             feature_dim = out_features.size(1)
             output = F.softmax(G_soft_list[i](out_features) , dim=1)
             if i == 0:
