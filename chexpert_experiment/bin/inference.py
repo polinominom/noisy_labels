@@ -435,9 +435,10 @@ if args.mode == 'extract':
         ImageDataset([np_dev_h5_file, np_dev_u_zeros, np_dev_u_ones, np_dev_u_random], cfg, mode='val'),
         batch_size=cfg.dev_batch_size, num_workers=args.num_workers,
         drop_last=False, shuffle=False)
-    extract_features(device, model, dataloader_train, args.saved_path, "inference_train_val")
-    extract_features(device, model, dataloader_dev_val, args.saved_path, "inference_test_val")
-    extract_features(device, model, dataloader_dev, args.saved_path, "inference_test_test")
+        
+    extract_features(device, model, dataloader_train, args.batch_size, args.saved_path, "inference_train_val")
+    extract_features(device, model, dataloader_dev_val, args.batch_size, args.saved_path, "inference_test_val")
+    extract_features(device, model, dataloader_dev, args.batch_size, args.saved_path, "inference_test_test")
 elif args.mode == 'run':
     num_classes = 13
     test_data_list = []
