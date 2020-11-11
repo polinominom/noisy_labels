@@ -334,6 +334,7 @@ def extract_features(device, model, dataloader, batch_size, file_root, data_name
             else:
                 total_final_feature = torch.cat((total_final_feature, out_features.cuda().clone()), 0)
             #
+            total += 1
             #
             print_remaining_time(before, step+1, steps, additional='[extract_features]')
             
