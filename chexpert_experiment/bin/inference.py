@@ -372,17 +372,17 @@ with open(args.cfg_path) as f:
 torch.cuda.manual_seed(0)
 torch.cuda.set_device(args.gpu)
 
-with h5py.File(args.dev_h5,'r'):
-    np_dev_h5_file    = np.array(val_h5_file['val'], dtype=np.uint8)
-    np_dev_u_ones     = np.array(val_h5_file['val_u_ones'], dtype=np.int8)    
-    np_dev_u_zeros    = np.array(val_h5_file['val_u_zeros'], dtype=np.int8)
-    np_dev_u_random   = np.array(val_h5_file['val_u_random'], dtype=np.int8)
+with h5py.File(args.dev_h5,'r') as dev_h5_file:
+    np_dev_h5_file    = np.array(dev_h5_file['val'], dtype=np.uint8)
+    np_dev_u_ones     = np.array(dev_h5_file['val_u_ones'], dtype=np.int8)    
+    np_dev_u_zeros    = np.array(dev_h5_file['val_u_zeros'], dtype=np.int8)
+    np_dev_u_random   = np.array(dev_h5_file['val_u_random'], dtype=np.int8)
 
-with h5py.File(args.dev_val_h5,'r'):
-    np_dev_val_h5_file    = np.array(val_h5_file['val'], dtype=np.uint8)
-    np_dev_val_u_ones     = np.array(val_h5_file['val_u_ones'], dtype=np.int8)    
-    np_dev_val_u_zeros    = np.array(val_h5_file['val_u_zeros'], dtype=np.int8)
-    np_dev_val_u_random   = np.array(val_h5_file['val_u_random'], dtype=np.int8)
+with h5py.File(args.dev_val_h5,'r') as dev_val_h5_file:
+    np_dev_val_h5_file    = np.array(dev_val_h5_file['val'], dtype=np.uint8)
+    np_dev_val_u_ones     = np.array(dev_val_h5_file['val_u_ones'], dtype=np.int8)    
+    np_dev_val_u_zeros    = np.array(dev_val_h5_file['val_u_zeros'], dtype=np.int8)
+    np_dev_val_u_random   = np.array(dev_val_h5_file['val_u_random'], dtype=np.int8)
 
 train_labels = {}
 with h5py.File(f'{args.train_chunks}/train_labels.h5','r') as fp:
