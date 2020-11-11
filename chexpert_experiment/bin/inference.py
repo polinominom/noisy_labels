@@ -96,7 +96,7 @@ def MCD_single(feature, sample_mean, inverse_covariance, batch_size):
     total, mahalanobis_score = 0, 0
     frac = 0.7
     for data_index in range(int(np.ceil(feature.size(0)/temp_batch))):
-        temp_feature = feature[total : total + temp_batch].cuda()
+        temp_feature = feature[total : total + temp_batch]
         gaussian_score = 0
         batch_sample_mean = sample_mean
         zero_f = temp_feature - batch_sample_mean
@@ -111,7 +111,7 @@ def MCD_single(feature, sample_mean, inverse_covariance, batch_size):
     mahalanobis_score = mahalanobis_score.view(-1)
     feature = feature.view(feature.size(0), -1)
     _, selected_idx = torch.topk(mahalanobis_score, int(feature.size(0)*frac))
-    selected_feature = torch.index_select(feature, 0, selected_idx.cuda())
+    selected_feature = torch.index_select(feature, 0, selected_idx)
     new_sample_mean = torch.mean(selected_feature, 0)
     
     # compute covariance matrix
@@ -463,20 +463,20 @@ elif args.mode == 'run':
     # train data shape should be: (N, 1024)
     print(f'Train data shape: {train_data.shape}')
     if cfg.label_fill_type == 'ones':
-        inference_train_labels = train_labels['train_u_ones'][len(np_train_samples)]
+        inference_train_labels = train_labels['train_u_ones'][:len(np_train_samples)]
         inference_test_data_val_labels = np_dev_val_u_ones
         inference_test_data_test_labels = np_dev_u_ones
     elif cfg.label_fill_type == 'zeros':
-        inference_train_labels = train_labels['train_u_zeros'][len(np_train_samples)]
+        inference_train_labels = train_labels['train_u_zeros'][:len(np_train_samples)]
         inference_test_data_val_labels = np_dev_val_u_zeros
         inference_test_data_test_labels = np_dev_u_zeros
     elif cfg.label_fill_type == 'random':
-        inference_train_labels = train_labels['train_u_random'][len(np_train_samples)]
+        inference_train_labels = train_labels['train_u_random'][:len(np_train_samples)]
         inference_test_data_val_labels = np_dev_val_u_random
         inference_test_data_test_labels = np_dev_u_random
     #
     print('Random Sample Mean')
-    sample_mean, sample_precision, _ = random_sample_mean(train_data.cuda(), inference_train_labels.cuda(), num_classes)
+    sample_mean, sample_precision, _ = random_sample_mean(train_data, inference_train_labels, num_classes)
     #
     new_sample_mean_list = []
     new_sample_precision_list = []
