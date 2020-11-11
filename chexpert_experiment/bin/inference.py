@@ -478,28 +478,31 @@ elif args.mode == 'run':
     print('Random Sample Mean')
     sample_mean, sample_precision, _ = random_sample_mean(train_data, inference_train_labels, num_classes)
     #
+    print('MCD_single for each class')
+    #
     new_sample_mean_list = []
     new_sample_precision_list = []
-    new_sample_mean = torch.Tensor(num_classes, train_data.size(1)).fill_(0).cuda()
+    new_sample_mean = torch.Tensor(num_classes, train_data.size(1)).fill_(0).cpu()
     new_covariance = 0
     for i in range(num_classes):
         index_list = inference_train_labels[:,i].eq(1)
         temp_feature = train_data[index_list.nonzero()[:,0]]
         temp_feature = temp_feature.view(temp_feature.size(0), -1)
         #
-        temp_mean, temp_cov, _= MCD_single(temp_feature.cuda(), sample_mean[i], sample_precision, args.batch_size)
+        temp_mean, temp_cov, _= MCD_single(temp_feature.cpu(), sample_mean[i], sample_precision, args.batch_size)
         new_sample_mean[i].copy_(temp_mean)
         if i == 0:
             new_covariance = temp_feature.size(0)*temp_cov
         else:
             new_covariance += temp_feature.size(0)*temp_cov
-                
+    print('Computing new covariance ...')
     new_covariance = new_covariance / train_data.size(0)
     new_precision = scipy.linalg.pinvh(new_covariance)
     new_precision = torch.from_numpy(new_precision).float().cuda()
     new_sample_mean_list.append(new_sample_mean)
     new_sample_precision_list.append(new_precision)
     #
+    print('G SOFT LIST ...')
     G_soft_list = []
     target_mean = new_sample_mean_list 
     target_precision = new_sample_precision_list
