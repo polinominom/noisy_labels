@@ -338,7 +338,9 @@ def extract_features(device, model, dataloader, batch_size, file_root, data_name
             print_remaining_time(before, step+1, steps, additional='[extract_features]')
             
         file_name_data = '%s/%s_feature_%s.npy' % (file_root, data_name, str(1))
-        np.save(file_name_data , total_final_feature.cpu().numpy())
+        n = total_final_feature.cpu().numpy()
+        print(f'n.shape: {n.shape}')
+        np.save(file_name_data , n)
 def log_result(args, softmax_result, rog_result):
     #auc?
     contents = os.listdir('./chexpert_experiment')
@@ -446,15 +448,15 @@ elif args.mode == 'run':
     #
     file_root = args.saved_path
     #
-    file_name_data = '%s/test_test_feature_%s.npy' % (file_root, str(1))
+    file_name_data = '%s/inference_test_test_feature_%s.npy' % (file_root, str(1))
     test_data = torch.from_numpy(np.load(file_name_data)).float()
     test_data_list.append(test_data)
     #
-    file_name_data = '%s/test_val_feature_%s.npy' % (file_root, str(1))
+    file_name_data = '%s/inference_test_val_feature_%s.npy' % (file_root, str(1))
     test_data_val = torch.from_numpy(np.load(file_name_data)).float()
     test_val_data_list.append(test_data_val)
     # 
-    file_name_data = '%s/train_val_feature_%s.npy' % (file_root, str(1))
+    file_name_data = '%s/inference_train_val_feature_%s.npy' % (file_root, str(1))
     train_data = torch.from_numpy(np.load(file_name_data)).float()
     train_data_list.append(train_data)
     # train data shape should be: (N, 1024)
