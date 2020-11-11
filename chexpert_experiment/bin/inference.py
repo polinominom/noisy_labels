@@ -5,6 +5,7 @@ import argparse
 import logging
 import json
 import time
+import h5py
 import subprocess
 from shutil import copyfile
 import torch
@@ -261,7 +262,7 @@ def test_softmax(model, total_data, total_label, batch_size):
             
             z = torch.zeros(num_classes, data.size(0))
             for i in range(num_classes):
-            z[i] = total_out[i].squeeze(1)
+                z[i] = total_out[i].squeeze(1)
             
             pred = torch.sigmoid(z.t()).ge(0.5).float()
             equal_flag = pred.eq(target.data.float()).cuda()
@@ -327,23 +328,40 @@ def extract_features(device, model, dataloader, batch_size, file_root, data_name
         file_name_data = '%s/%s_feature_%s.npy' % (file_root, data_name, str(1))
         total_feature = total_final_feature.numpy()
         np.save(file_name_data , total_feature)
+def log_result(args, softmax_result, rog_result):
+    #auc?
+    contents = os.listdir('./chexpert_experiment')
+    result_file_list = []
+    for c in content:
+        if 'rog_result_' in c:
+            result_file_list.append(int(c.split('_')[-1]))
+    m = -1
+    if result_file_list != []:
+        m = max(result_file_list)
+
+    with open(f'./chexpert_experiment/rog_result_{m+1}.txt', 'w') as f:
+        for k, v in vars(args).items():
+            f.write(f'{k}: \t \t \t {v}\n')
+        for k, v in softmax_result.items():
+            f.write(f'{k}: \t \t \t {v}\n')
+        for k, v in rog_result.items():
+            f.write(f'{k}: \t \t \t {v}\n')
 
 parser = argparse.ArgumentParser(description='rog')
-parser.add_argument('--gpu', type=int, default=0, help='gpu index')
 parser.add_argument('cfg_path', default=None, metavar='CFG_PATH', type=str, help="Path of the config file in yaml format")
 parser.add_argument('saved_path', default=None, metavar='SAVE_PATH', type=str, help="Path of the saved models")
+parser.add_argument('--gpu', type=int, default=0, help='gpu index')
 parser.add_argument('--train_chunks', type=str, help="h5 file path for train dataset")
-parser.add_argument('--train_chunk_number', type=int, help="number of chunks in the folder")
 parser.add_argument('--dev_h5', type=str, help="h5 file path for val dataset")
 parser.add_argument('--dev_val_h5', type=str, help="h5 file path for dev_val dataset")
 parser.add_argument('--chunk_count', type=int, default=0, help="usable chunk count")
-parser.add_argument('--inference_folder', type=str)
-parser.add_argument('--saved_model_path', type=str)
+parser.add_argument('--saved_model_path', type=str, default='', help='model which trained under noise.')
 parser.add_argument('--num_workers', default=4, type=int, help="Number of workers for each data loader")
 parser.add_argument('--mode',type=str,help='inference mode, should be one of the following: [extract, run]')
 args = parser.parse_args()
-print(args)
-
+#print(args)
+#print('args parsed correctly...')
+#exit()
 batch_size = args.batch_size
 with open(args.cfg_path) as f:
     cfg = edict(json.load(f))
@@ -379,21 +397,6 @@ for i in range(args.chunk_count):
         else:
             np_train_samples = np.concatenate((np_train_samples, np.load(f)))
 
-dataloader_train = DataLoader(
-    ImageDataset([np_train_samples, train_labels], cfg, mode='train'),
-    batch_size=cfg.train_batch_size, num_workers=args.num_workers,
-    drop_last=True, shuffle=True)
-
-dataloader_dev_val = DataLoader(
-    ImageDataset([np_dev_val_h5_file, np_dev_u_zeros, np_dev_val_u_ones, np_dev_u_random], cfg, mode='val'),
-    batch_size=cfg.dev_batch_size, num_workers=args.num_workers,
-    drop_last=False, shuffle=False)
-
-dataloader_dev = DataLoader(
-    ImageDataset([np_dev_h5_file, np_dev_u_zeros, np_dev_u_ones, np_dev_u_random], cfg, mode='val'),
-    batch_size=cfg.dev_batch_size, num_workers=args.num_workers,
-    drop_last=False, shuffle=False)
-
 # load best chexpert model from normal
 print('loading network: '+ args.saved_model_path)
 model = Classifier(cfg)
@@ -404,6 +407,20 @@ model.cuda()
 device = torch.device(f'cuda:{args.gpu}')
 #
 if args.mode == 'extract':
+    dataloader_train = DataLoader(
+        ImageDataset([np_train_samples, train_labels], cfg, mode='train'),
+        batch_size=cfg.train_batch_size, num_workers=args.num_workers,
+        drop_last=True, shuffle=True)
+
+    dataloader_dev_val = DataLoader(
+        ImageDataset([np_dev_val_h5_file, np_dev_val_u_zeros, np_dev_val_u_ones, np_dev_val_u_random], cfg, mode='val'),
+        batch_size=cfg.dev_batch_size, num_workers=args.num_workers,
+        drop_last=False, shuffle=False)
+
+    dataloader_dev = DataLoader(
+        ImageDataset([np_dev_h5_file, np_dev_u_zeros, np_dev_u_ones, np_dev_u_random], cfg, mode='val'),
+        batch_size=cfg.dev_batch_size, num_workers=args.num_workers,
+        drop_last=False, shuffle=False)
     extract_features(device, model, dataloader_train, args.saved_path, "inference_train_val")
     extract_features(device, model, dataloader_dev_val, args.saved_path, "inference_test_val")
     extract_features(device, model, dataloader_dev, args.saved_path, "inference_test_test")
@@ -412,6 +429,8 @@ elif args.mode == 'run':
     test_data_list = []
     train_data_list = []
     test_val_data_list = []
+    #
+    file_root = args.saved_path
     #
     file_name_data = '%s/test_test_feature_%s.npy' % (file_root, str(1))
     test_data = torch.from_numpy(np.load(file_name_data)).float()
@@ -426,9 +445,18 @@ elif args.mode == 'run':
     train_data_list.append(train_data)
     # train data shape should be: (N, 1024)
     print(f'Train data shape: {train_data.shape}')
-    inference_train_labels = train_labels['train_u_ones']
-    inference_test_data_val_labels = np_dev_val_u_ones
-    inference_test_data_test_labels = np_dev_u_ones
+    if label_fill_type == 'ones':
+        inference_train_labels = train_labels['train_u_ones'][len(np_train_samples)]
+        inference_test_data_val_labels = np_dev_val_u_ones
+        inference_test_data_test_labels = np_dev_u_ones
+    elif label_fill_type == 'zeros':
+        inference_train_labels = train_labels['train_u_zeros'][len(np_train_samples)]
+        inference_test_data_val_labels = np_dev_val_u_zeros
+        inference_test_data_test_labels = np_dev_u_zeros
+    elif label_fill_type == 'random':
+        inference_train_labels = train_labels['train_u_random'][len(np_train_samples)]
+        inference_test_data_val_labels = np_dev_val_u_random
+        inference_test_data_test_labels = np_dev_u_random
     #
     print('Random Sample Mean')
     sample_mean, sample_precision, _ = random_sample_mean(train_data.cuda(), inference_train_labels.cuda(), num_classes)
@@ -483,4 +511,6 @@ elif args.mode == 'run':
     print(f'Softmax accuracy: {soft_acc}')
     #
     RoG_acc = test_ensemble(G_soft_list, soft_weight, [test_data], inference_test_data_test_labels, args.batch_size)
-    print(f'RoG accuracy: {RoG_acc}'))
+    print(f'RoG accuracy: {RoG_acc}')
+    #
+    log_result(args, {'soft_acc':soft_acc}, {'rog_acc':RoG_acc})

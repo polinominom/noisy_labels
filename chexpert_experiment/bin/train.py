@@ -30,23 +30,15 @@ from model.utils import get_optimizer  # noqa
 import h5py
 
 parser = argparse.ArgumentParser(description='Train model')
-parser.add_argument('cfg_path', default=None, metavar='CFG_PATH', type=str,
-                    help="Path to the config file in yaml format")
-parser.add_argument('save_path', default=None, metavar='SAVE_PATH', type=str,
-                    help="Path to the saved models")
-parser.add_argument('--num_workers', default=4, type=int, help="Number of "
-                    "workers for each data loader")
-parser.add_argument('--device_ids', default='0', type=str,
-                    help="GPU indices ""comma separated, e.g. '0,1' ")
-parser.add_argument('--pre_train', default=None, type=str, help="If get"
-                    "parameters from pretrained model")
-parser.add_argument('--resume', default=0, type=int, help="If resume from "
-                    "previous run")
-parser.add_argument('--logtofile', default=True, type=bool, help="Save log "
-                    "in save_path/log.txt if set True")
+parser.add_argument('cfg_path', default=None, metavar='CFG_PATH', type=str, help="Path to the config file in yaml format")
+parser.add_argument('save_path', default=None, metavar='SAVE_PATH', type=str, help="Path to the saved models")
+parser.add_argument('--num_workers', default=4, type=int, help="Number of workers for each data loader")
+parser.add_argument('--device_ids', default='0', type=str, help="GPU indices ""comma separated, e.g. '0,1' ")
+parser.add_argument('--pre_train', default=None, type=str, help="If get parameters from pretrained model")
+parser.add_argument('--resume', default=0, type=int, help="If resume from previous run")
+parser.add_argument('--logtofile', default=True, type=bool, help="Save log in save_path/log.txt if set True")
 parser.add_argument('--verbose', default=False, type=bool, help="Detail info")
 parser.add_argument('--train_chunks', type=str, help="h5 file path for train dataset")
-parser.add_argument('--train_chunk_number', type=int, help="number of chunks in the folder")
 parser.add_argument('--val_h5', type=str, help="h5 file path for val dataset")
 parser.add_argument('--chunk_count', type=int, default=0, help="usable chunk count")
 
@@ -353,13 +345,7 @@ def run(args, val_h5_file):
         train_labels['train_u_ones'] = np.array(fp['train_u_ones'], dtype=np.int8)
         train_labels['train_u_zeros'] = np.array(fp['train_u_zeros'], dtype=np.int8)
         train_labels['train_u_random'] = np.array(fp['train_u_random'], dtype=np.int8)
-    # dataloader_train = DataLoader(
-    #     ImageDataset([np_train_h5_file, np_t_u_zeros, np_t_u_ones, np_t_u_random], cfg, mode='train'),
-    #     batch_size=cfg.train_batch_size, num_workers=args.num_workers,
-    #     drop_last=True, shuffle=True)
     np_train_samples = None
-    # with open(f'{args.train_chunks}/chexpert_dset_chunk_1.npy', 'rb') as f:
-    #     np_train_samples = np.load(f)
     for i in range(args.chunk_count):
         with open(f'{args.train_chunks}/chexpert_dset_chunk_{i+1}.npy', 'rb') as f:
             if np_train_samples is None:
