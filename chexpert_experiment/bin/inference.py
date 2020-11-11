@@ -20,6 +20,9 @@ import torch.utils.model_zoo as model_zoo
 from easydict import EasyDict as edict
 from torch import nn
 
+from data.dataset import ImageDataset  # noqa
+from model.classifier import Classifier  # noqa
+
 def print_remaining_time(before, currentPosition, totalSize, additional=''):
   after = datetime.datetime.now()
   elaspsed_time = (after - before).seconds
