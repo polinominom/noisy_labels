@@ -436,8 +436,8 @@ if args.mode == 'extract':
         drop_last=False, shuffle=False)
 
     extract_features(device, model, dataloader_train, args.batch_size, args.saved_path, "inference_train_val")
-    extract_features(device, model, dataloader_dev_val, args.batch_size, args.saved_path, "inference_test_val")
     extract_features(device, model, dataloader_dev, args.batch_size, args.saved_path, "inference_test_test")
+    extract_features(device, model, dataloader_dev_val, args.batch_size, args.saved_path, "inference_test_val")
 elif args.mode == 'run':
     num_classes = 13
     test_data_list = []
