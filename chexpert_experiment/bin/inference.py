@@ -409,15 +409,15 @@ for i in range(args.chunk_count):
             np_train_samples = np.load(f)
         else:
             np_train_samples = np.concatenate((np_train_samples, np.load(f)))
-
+#
+device = torch.device(f'cuda:{args.gpu}')
 # load best chexpert model from normal
 print('loading network: '+ args.saved_model_path)
 model = Classifier(cfg)
 #model = DataParallel(model, device_ids=args.gpu).to(device)
-model.load_state_dict(torch.load(args.saved_model_path, map_location = "cuda:" + str(args.gpu)))
+ckpt = torch.load(args.saved_model_path, map_location=device)
+model.module.load_state_dict(ckpt)
 model.cuda()
-#
-device = torch.device(f'cuda:{args.gpu}')
 #
 if args.mode == 'extract':
     dataloader_train = DataLoader(
