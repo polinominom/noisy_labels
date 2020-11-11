@@ -462,15 +462,15 @@ elif args.mode == 'run':
     train_data_list.append(train_data)
     # train data shape should be: (N, 1024)
     print(f'Train data shape: {train_data.shape}')
-    if label_fill_type == 'ones':
+    if cfg.label_fill_type == 'ones':
         inference_train_labels = train_labels['train_u_ones'][len(np_train_samples)]
         inference_test_data_val_labels = np_dev_val_u_ones
         inference_test_data_test_labels = np_dev_u_ones
-    elif label_fill_type == 'zeros':
+    elif cfg.label_fill_type == 'zeros':
         inference_train_labels = train_labels['train_u_zeros'][len(np_train_samples)]
         inference_test_data_val_labels = np_dev_val_u_zeros
         inference_test_data_test_labels = np_dev_u_zeros
-    elif label_fill_type == 'random':
+    elif cfg.label_fill_type == 'random':
         inference_train_labels = train_labels['train_u_random'][len(np_train_samples)]
         inference_test_data_val_labels = np_dev_val_u_random
         inference_test_data_test_labels = np_dev_u_random
