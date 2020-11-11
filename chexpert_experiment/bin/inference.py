@@ -24,6 +24,14 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/../')
 from data.dataset import ImageDataset  # noqa
 from model.classifier import Classifier  # noqa
 
+import numpy as np
+from sklearn import metrics
+from easydict import EasyDict as edict
+import torch
+from torch.utils.data import DataLoader
+import torch.nn.functional as F
+from torch.nn import DataParallel
+
 def print_remaining_time(before, currentPosition, totalSize, additional=''):
   after = datetime.datetime.now()
   elaspsed_time = (after - before).seconds
@@ -405,7 +413,7 @@ for i in range(args.chunk_count):
 # load best chexpert model from normal
 print('loading network: '+ args.saved_model_path)
 model = Classifier(cfg)
-model = DataParallel(model, device_ids=arg.gpu).to(device).train()
+model = DataParallel(model, device_ids=arg.gpu).to(device)
 model.load_state_dict(torch.load(args.saved_model_path, map_location = "cuda:" + str(args.gpu)))
 model.cuda()
 #
