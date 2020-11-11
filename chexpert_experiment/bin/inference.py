@@ -522,7 +522,8 @@ elif args.mode == 'run':
     print('Finding softweights...')
     soft_weight = train_weights(G_soft_list, new_val_data_list, new_val_label, args.batch_size)
     #
-    soft_acc = test_softmax(model, np_dev_h5_file, inference_test_data_test_labels, args.batch_size)
+    data = torch.from_numpy(np_dev_h5_file)
+    soft_acc = test_softmax(model, data, inference_test_data_test_labels, args.batch_size)
     print(f'Softmax accuracy: {soft_acc}')
     #
     RoG_acc = test_ensemble(G_soft_list, soft_weight, [test_data], inference_test_data_test_labels, args.batch_size)
