@@ -251,29 +251,30 @@ def train_weights(G_soft_list, total_val_data, total_val_label, batch_size):
     return soft_weight
 
 
-def test_softmax(model, total_data, total_label, batch_size):
+def test_softmax(device, model, dataloader, num_classes, batch_size):
     with torch.no_grad():
         model.eval()
-        total, correct_D = 0, 0
-        iteration_count = int(np.floor(total_data.size(0)/batch_size))
+        correct_D = 0
+        steps = len(dataloader)
+        dataiter = iter(dataloader)
+        total_final_feature = [0]*steps
         before = datetime.datetime.now()
-
-        num_classes = total_label.size(1)
-        for data_index in range(iteration_count):
-            data, target = total_data[total : total + batch_size], total_label[total : total + batch_size]
-            #data, target = Variable(data, volatile=True), Variable(target)
+        for step in range(steps):
+            data, _ = next(dataiter)
+            data = data.to(device).float()
             total_out, _ = model(data)
-            total += batch_size
-            
+            #
             z = torch.zeros(num_classes, data.size(0))
             for i in range(num_classes):
                 z[i] = total_out[i].squeeze(1)
-            
+            #
             pred = torch.sigmoid(z.t()).ge(0.5).float()
+            #
             equal_flag = pred.eq(target.data.float()).cuda()
             correct_D += equal_flag.sum()/num_classes
-            print_remaining_time(before, data_index+1, iteration_count, additional='[test_softmax]')
-        return 100. * correct_D / total
+            #
+            print_remaining_time(before, step+1, steps, additional='[test_softmax]')
+        return 100. * correct_D / steps
 
 def test_ensemble(G_soft_list, soft_weight, total_val_data, total_val_label, batch_size):
     with torch.no_grad():
@@ -415,22 +416,22 @@ ckpt = torch.load(args.saved_model_path, map_location=device)
 model.module.load_state_dict(ckpt['state_dict'])
 model.cuda()
 #
-if args.mode == 'extract':
-    dataloader_train = DataLoader(
+dataloader_train = DataLoader(
         ImageDataset([np_train_samples, train_labels], cfg, mode='train'),
         batch_size=cfg.train_batch_size, num_workers=args.num_workers,
         drop_last=False, shuffle=False)
 
-    dataloader_dev_val = DataLoader(
+dataloader_dev_val = DataLoader(
         ImageDataset([np_dev_val_h5_file, np_dev_val_u_zeros, np_dev_val_u_ones, np_dev_val_u_random], cfg, mode='val'),
         batch_size=cfg.dev_batch_size, num_workers=args.num_workers,
         drop_last=False, shuffle=False)
 
-    dataloader_dev = DataLoader(
+dataloader_dev = DataLoader(
         ImageDataset([np_dev_h5_file, np_dev_u_zeros, np_dev_u_ones, np_dev_u_random], cfg, mode='val'),
         batch_size=cfg.dev_batch_size, num_workers=args.num_workers,
         drop_last=False, shuffle=False)
 
+if args.mode == 'extract':
     extract_features(device, model, dataloader_train, args.batch_size, args.saved_path, "inference_train_val")
     extract_features(device, model, dataloader_dev, args.batch_size, args.saved_path, "inference_test_test")
     extract_features(device, model, dataloader_dev_val, args.batch_size, args.saved_path, "inference_test_val")
@@ -520,10 +521,10 @@ elif args.mode == 'run':
         new_val_label = torch.index_select(inference_test_data_val_labels, 0, selected_list.cpu())
         new_val_data_list.append(new_val_data)
     print('Finding softweights...')
+    
     soft_weight = train_weights(G_soft_list, new_val_data_list, new_val_label, args.batch_size)
     #
-    data = torch.from_numpy(np_dev_h5_file)
-    soft_acc = test_softmax(model, data, inference_test_data_test_labels, args.batch_size)
+    soft_acc = test_softmax(model, dataloader_dev, inference_test_data_test_labels, args.batch_size)
     print(f'Softmax accuracy: {soft_acc}')
     #
     RoG_acc = test_ensemble(G_soft_list, soft_weight, [test_data], inference_test_data_test_labels, args.batch_size)
