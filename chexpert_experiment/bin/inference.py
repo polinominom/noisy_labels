@@ -181,11 +181,8 @@ def train_weights(G_soft_list, total_val_data, total_val_label, batch_size):
 
         for i in range(num_ensemble):
             out_features = total_val_data[i][total : total + batch_size].cuda()
-            out_features = Variable(out_features, volatile=True)
             feature_dim = out_features.size(1)
             output = F.softmax(G_soft_list[i](out_features) , dim=1)
-                
-            output = Variable(output.data, volatile=True)
             if i == 0:
                 total_out = soft_weight[i]*output
             else:
