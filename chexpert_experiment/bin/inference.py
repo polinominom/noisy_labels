@@ -524,7 +524,7 @@ elif args.mode == 'run':
     
     soft_weight = train_weights(G_soft_list, new_val_data_list, new_val_label, args.batch_size)
     #
-    soft_acc = test_softmax(device, model, dataloader_dev, inference_test_data_test_labels, args.batch_size)s
+    soft_acc = test_softmax(device, model, dataloader_dev, inference_test_data_test_labels, args.batch_size)
     print(f'Softmax accuracy: {soft_acc}')
     #
     RoG_acc = test_ensemble(G_soft_list, soft_weight, [test_data], inference_test_data_test_labels, args.batch_size)
