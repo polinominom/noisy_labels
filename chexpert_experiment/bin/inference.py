@@ -85,7 +85,7 @@ def random_sample_mean(feature, total_label, num_classes):
         else:
             total_covariance += inv_sample_conv*fraction_list[i]
         total_covariance = total_covariance/sum(fraction_list)
-    new_precision = scipy.linalg.pinvh(total_covariance.cuda().numpy())
+    new_precision = scipy.linalg.pinvh(total_covariance.cpu().numpy())
     new_precision = torch.from_numpy(new_precision).float()
     
     return sample_mean_per_class, new_precision, total_selected_list
