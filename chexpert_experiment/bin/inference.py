@@ -20,6 +20,7 @@ import torch.utils.model_zoo as model_zoo
 from easydict import EasyDict as edict
 from torch import nn
 
+sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/../')
 from data.dataset import ImageDataset  # noqa
 from model.classifier import Classifier  # noqa
 
@@ -414,7 +415,7 @@ if args.mode == 'extract':
     dataloader_train = DataLoader(
         ImageDataset([np_train_samples, train_labels], cfg, mode='train'),
         batch_size=cfg.train_batch_size, num_workers=args.num_workers,
-        drop_last=True, shuffle=True)
+        drop_last=False, shuffle=False)
 
     dataloader_dev_val = DataLoader(
         ImageDataset([np_dev_val_h5_file, np_dev_val_u_zeros, np_dev_val_u_ones, np_dev_val_u_random], cfg, mode='val'),
