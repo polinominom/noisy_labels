@@ -260,9 +260,9 @@ def test_softmax(device, model, dataloader, num_classes, batch_size):
         total_final_feature = [0]*steps
         before = datetime.datetime.now()
         for step in range(steps):
-            data, _ = next(dataiter)
+            data, target = next(dataiter)
             data = data.to(device).float()
-            total_out, target = model(data)
+            total_out, _ = model(data)
             #
             z = torch.zeros(num_classes, data.size(0))
             for i in range(num_classes):
