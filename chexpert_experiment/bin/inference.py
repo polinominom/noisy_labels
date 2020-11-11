@@ -291,7 +291,7 @@ def test_ensemble(G_soft_list, soft_weight, total_val_data, total_val_label, bat
             for i in range(num_output):
                 out_features = total_val_data[i][total : total + batch_size].cuda()
                 feature_dim = out_features.size(1)
-                output = F.softmax(G_soft_list[i](out_features), dim=1)
+                output = F.softmax(G_soft_list[i](out_features.cpu()), dim=1)
                 if i == 0:
                     total_out = soft_weight[i]*output
                 else:
