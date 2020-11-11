@@ -417,7 +417,7 @@ model = Classifier(cfg)
 #model = DataParallel(model, device_ids=args.gpu).to(device)
 model = DataParallel(model, device_ids=[args.gpu]).to(device)
 ckpt = torch.load(args.saved_model_path, map_location=device)
-model.module.load_state_dict(ckpt)
+model.module.load_state_dict(ckpt['state_dict'])
 model.cuda()
 #
 if args.mode == 'extract':
