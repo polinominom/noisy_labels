@@ -301,8 +301,8 @@ def test_epoch(device, cfg, model, dataloader):
 def test_ensemble(G_soft_list, soft_weight, total_val_data, total_val_label, cfg):
     num_classes = len(cfg.num_classes)
     data_length = total_val_data[0].size(0)
-    predList    = torch.zeros(data_length, num_classes)
-    trueList    = torch.zeros(data_length, num_classes)
+    predList    = torch.zeros(num_classes, data_length)
+    trueList    = torch.zeros(num_classes, data_length)
     with torch.no_grad():
         correct_D = 0
         num_output = len(G_soft_list)
@@ -315,16 +315,16 @@ def test_ensemble(G_soft_list, soft_weight, total_val_data, total_val_label, cfg
                 out_features = total_val_data[i][data_index].cpu()
                 feature_dim = out_features.size(1)
                 logits = G_soft_list[i](out_features.cpu())
-                output = torch.ones(num_classes)
-                for j in range(num_classes):
-                    output[j] = torch.sigmoid(logits[j])
+                output = torch.sigmoid(logits)
                 if i == 0:
                     total_out = soft_weight[i]*output
                 else:
                     total_out += soft_weight[i]*output
                     
             #pred = torch.sigmoid(total_out).ge(0.5).float()
-            predList[data_index] = total_out
+            for j in range(num_classes):
+                predList[j][data_index] = total_out[j]
+                trueList[j][data_index] = target[j]
             pred = total_out.ge(0.5).float()
             equal_flag = pred.eq(target.data.float()).cpu()
             correct_D += equal_flag.sum() / num_clases
@@ -334,7 +334,7 @@ def test_ensemble(G_soft_list, soft_weight, total_val_data, total_val_label, cfg
         auclist = np.zeros(num_classes)
         for i in range(num_classes):
             y_pred = predList[i]
-            y_true = total_val_label[i]
+            y_true = trueList[i]
             fpr, tpr, thresholds = metrics.roc_curve(y_true, y_pred, pos_label=1)
             auc = metrics.auc(fpr, tpr)
             auclist[i] = auc
