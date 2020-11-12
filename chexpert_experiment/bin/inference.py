@@ -175,13 +175,13 @@ def train_weights(G_soft_list, total_val_data, total_val_label, batch_size):
 
     for data_index in range(int(np.floor(total_num_data/batch_size))):
         target = total_val_label[total : total + batch_size].cpu()
-        soft_weight = F.softmax(train_weights, dim=0)
+        soft_weight = torch.sigmoid(train_weights)
         total_out = 0
 
         for i in range(num_ensemble):
             out_features = total_val_data[i][total : total + batch_size].cpu()
             feature_dim = out_features.size(1)
-            output = F.softmax(G_soft_list[i](out_features) , dim=1)
+            output = torch.sigmoid(G_soft_list[i](out_features))
             if i == 0:
                 total_out = soft_weight[i]*output
             else:
@@ -204,14 +204,14 @@ def train_weights(G_soft_list, total_val_data, total_val_label, batch_size):
 
             def closure():
                 optimizer.zero_grad()
-                soft_weight = F.softmax(train_weights, dim=0)
+                soft_weight = torch.sigmoid(train_weights)
 
                 total_out = 0
                 for i in range(num_ensemble):
                     out_features = torch.index_select(total_val_data[i], 0, index).cpu()
                     #out_features = Variable(out_features)
                     feature_dim = out_features.size(1)
-                    output = F.softmax(G_soft_list[i](out_features) , dim=1)
+                    output = torch.sigmoid(G_soft_list[i](out_features))
                     
                     if i == 0:
                         total_out = soft_weight[i]*output
@@ -229,14 +229,14 @@ def train_weights(G_soft_list, total_val_data, total_val_label, batch_size):
     
     for data_index in range(int(np.floor(total_num_data/batch_size))):
         target = total_val_label[total : total + batch_size].cpu()
-        soft_weight = F.softmax(train_weights, dim=0)
+        soft_weight = torch.sigmoid(train_weights)
         total_out = 0
 
         for i in range(num_ensemble):
             out_features = total_val_data[i][total : total + batch_size].cpu()
             #out_features = Variable(out_features, volatile=True)
             feature_dim = out_features.size(1)
-            output = F.softmax(G_soft_list[i](out_features) , dim=1)
+            output = torch.sigmoid(G_soft_list[i](out_features))
             if i == 0:
                 total_out = soft_weight[i]*output
             else:
@@ -247,62 +247,103 @@ def train_weights(G_soft_list, total_val_data, total_val_label, batch_size):
         equal_flag = pred.eq(target.data.float()).cpu()
         correct_D += equal_flag.sum()
         
-    soft_weight = F.softmax(train_weights, dim=0)
+    soft_weight = torch.sigmoid(train_weights)
     return soft_weight
 
+def get_loss(output, target, index, device, cfg):
+    if cfg.criterion == 'BCE':
+        for num_class in cfg.num_classes:
+            assert num_class == 1
 
-def test_softmax(device, model, dataloader, num_classes, batch_size):
+        target  = target[:, index].view(-1)
+        loss    = F.binary_cross_entropy_with_logits(output[index].view(-1), target)
+        label   = torch.sigmoid(output[index].view(-1)).ge(0.5).float()
+        acc     = (target == label).float().sum() / len(label)
+
+def test_epoch(device, cfg, model, dataloader):
+    summary = {}
+    torch.set_grad_enabled(False)
+    model.eval()
+    steps = len(dataloader)
+    dataiter = iter(dataloader)
+    num_tasks = len(cfg.num_classes)
+
+    loss_sum = np.zeros(num_tasks)
+    acc_sum = np.zeros(num_tasks)
+
+    predlist = list(x for x in range(len(cfg.num_classes)))
+    true_list = list(x for x in range(len(cfg.num_classes)))
+    for step in range(steps):
+        image, target = next(dataiter)
+        image = image.to(device).float()
+        target = target.to(device).float()
+        output, logit_map = model(image)
+        # different number of tasks
+        for t in range(len(cfg.num_classes)):
+            loss_t, acc_t = get_loss(output, target, t, device, cfg)
+            # AUC
+            output_tensor = torch.sigmoid(output[t].view(-1)).cpu().detach().numpy()
+            target_tensor = target[:, t].view(-1).cpu().detach().numpy()
+            if step == 0:
+                predlist[t] = output_tensor
+                true_list[t] = target_tensor
+            else:
+                predlist[t] = np.append(predlist[t], output_tensor)
+                true_list[t] = np.append(true_list[t], target_tensor)
+
+            loss_sum[t] += loss_t.item()
+            acc_sum[t] += acc_t.item()
+    summary['loss'] = loss_sum / steps
+    summary['acc'] = acc_sum / steps
+
+    return summary, predlist, true_list
+
+def test_ensemble(G_soft_list, soft_weight, total_val_data, total_val_label, cfg):
+    num_classes = len(cfg.num_classes)
+    data_length = total_val_data[0].size(0)
+    predList    = torch.zeros(data_length, num_classes)
+    trueList    = torch.zeros(data_length, num_classes)
     with torch.no_grad():
-        model.eval()
         correct_D = 0
-        steps = len(dataloader)
-        dataiter = iter(dataloader)
-        total_final_feature = [0]*steps
-        before = datetime.datetime.now()
-        for step in range(steps):
-            data, target = next(dataiter)
-            data = data.to(device).float()
-            total_out, _ = model(data)
-            #
-            z = torch.zeros(num_classes, data.size(0))
-            for i in range(num_classes):
-                z[i] = total_out[i].squeeze(1)
-            #
-            pred = torch.sigmoid(z.t()).ge(0.5).float()
-            #
-            equal_flag = pred.eq(target.data.float()).cuda()
-            correct_D += equal_flag.sum()/num_classes
-            #
-            print_remaining_time(before, step+1, steps, additional='[test_softmax]')
-        return 100. * correct_D / steps
-
-def test_ensemble(G_soft_list, soft_weight, total_val_data, total_val_label, batch_size):
-    with torch.no_grad():
-        total, correct_D = 0, 0
-        total_num_data = total_val_data[0].size(0)
         num_output = len(G_soft_list)
         num_clases = total_val_label.size(1)
-        iteration_count = int(np.floor(total_num_data/batch_size))
         before = datetime.datetime.now()
-        for data_index in range(iteration_count):
-            target = total_val_label[total : total + batch_size].cpu()
+        for data_index in range(data_length):
+            target = total_val_label[data_index].cpu()
             total_out = 0
-
             for i in range(num_output):
-                out_features = total_val_data[i][total : total + batch_size].cpu()
+                out_features = total_val_data[i][data_index].cpu()
                 feature_dim = out_features.size(1)
-                output = F.softmax(G_soft_list[i](out_features.cpu()), dim=1)
+                logits = G_soft_list[i](out_features.cpu())
+                output = torch.ones(num_classes)
+                for j in range(num_classes):
+                    output[j] = torch.sigmoid(logits[j])
                 if i == 0:
                     total_out = soft_weight[i]*output
                 else:
                     total_out += soft_weight[i]*output
                     
-            total += batch_size
-            pred = torch.sigmoid(total_out).ge(0.5).float()
+            #pred = torch.sigmoid(total_out).ge(0.5).float()
+            predList[data_index] = total_out
+            pred = total_out.ge(0.5).float()
             equal_flag = pred.eq(target.data.float()).cpu()
             correct_D += equal_flag.sum() / num_clases
             print_remaining_time(before, data_index + 1, iteration_count, additional='[test_ensemble]')
-        return 100. * correct_D / total
+        
+        summary = {}
+        auclist = np.zeros(num_classes)
+        for i in range(num_classes):
+            y_pred = predList[i]
+            y_true = total_val_label[i]
+            fpr, tpr, thresholds = metrics.roc_curve(y_true, y_pred, pos_label=1)
+            auc = metrics.auc(fpr, tpr)
+            auclist[i] = auc
+        
+        # auc
+        summary['rog_auc'] = auclist
+        # acc
+        summary['rog_acc'] = 100. * correct_D / data_length
+        return summary
 
 def extract_features(device, model, dataloader, batch_size, file_root, data_name):
     with torch.no_grad():
@@ -336,11 +377,12 @@ def extract_features(device, model, dataloader, batch_size, file_root, data_name
         n = total_final_feature.cpu().numpy()
         print(f'n.shape: {n.shape}')
         np.save(file_name_data , n)
-def log_result(args, softmax_result, rog_result):
+
+def log_result(args, r_result, rog_result):
     #auc?
     contents = os.listdir('./chexpert_experiment')
     result_file_list = []
-    for c in content:
+    for c in contents:
         if 'rog_result_' in c:
             result_file_list.append(int(c.split('_')[-1]))
     m = -1
@@ -350,7 +392,7 @@ def log_result(args, softmax_result, rog_result):
     with open(f'./chexpert_experiment/rog_result_{m+1}.txt', 'w') as f:
         for k, v in vars(args).items():
             f.write(f'{k}: \t \t \t {v}\n')
-        for k, v in softmax_result.items():
+        for k, v in r_result.items():
             f.write(f'{k}: \t \t \t {v}\n')
         for k, v in rog_result.items():
             f.write(f'{k}: \t \t \t {v}\n')
@@ -374,7 +416,7 @@ args = parser.parse_args()
 batch_size = args.batch_size
 with open(args.cfg_path) as f:
     cfg = edict(json.load(f))
-
+    print(f'CFG.criter: {cfg.criterion}')
 #layer_list = list(range(num_output))
 
 torch.cuda.manual_seed(0)
@@ -524,10 +566,20 @@ elif args.mode == 'run':
     
     soft_weight = train_weights(G_soft_list, new_val_data_list, new_val_label, args.batch_size)
     #
-    soft_acc = test_softmax(device, model, dataloader_dev, 13, args.batch_size)
-    print(f'Softmax accuracy: {soft_acc}')
+    with torch.no_grad():
+        summary, predList trueList = test_epoch(device, cfg, model, dataloader_dev)
+        auclist = []
+        for i in range(len(cfg.num_classes)):
+            y_pred = predlist[i]
+            y_true = true_list[i]
+            fpr, tpr, thresholds = metrics.roc_curve(y_true, y_pred, pos_label=1)
+            auc = metrics.auc(fpr, tpr)
+            auclist.append(auc)
+        summary['auc'] = np.array(auclist)
+        print(f'Normal acc: {summary['acc']}')
+        print(f'Normal auc: {summary['auc']}')
     #
     RoG_acc = test_ensemble(G_soft_list, soft_weight, [test_data], inference_test_data_test_labels, args.batch_size)
     print(f'RoG accuracy: {RoG_acc}')
     #
-    log_result(args, {'soft_acc':soft_acc}, {'rog_acc':RoG_acc})
+    log_result(args, {'soft_acc':acc_traditional}, {'rog_acc':RoG_acc})
