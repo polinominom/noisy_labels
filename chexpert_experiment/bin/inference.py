@@ -323,8 +323,8 @@ def test_ensemble(G_soft_list, soft_weight, total_val_data, total_val_label, cfg
                     total_out += soft_weight[i]*output
                     
             #pred = torch.sigmoid(total_out).ge(0.5).float()
+            print(total_out)
             for j in range(num_classes):
-                print(f'{total_out:.1f}')
                 predList[j][data_index] = total_out[j]
                 trueList[j][data_index] = target[j]
             pred = total_out.ge(0.5).float()
