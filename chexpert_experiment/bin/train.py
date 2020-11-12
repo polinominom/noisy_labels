@@ -148,7 +148,7 @@ def train_epoch(summary, summary_dev, cfg, args, model, dataloader,
         #print(output)
         loss = 0
         if cfg.criterion == 'HINGE':
-            for j in range(num_tasks):
+            for t in range(num_tasks):
                 loss_t = loss_sq_hinge(output[j], target[j])
                 loss += loss_t
                 loss_sum[t] += loss.item()
