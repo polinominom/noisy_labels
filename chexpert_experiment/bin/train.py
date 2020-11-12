@@ -146,7 +146,7 @@ def train_epoch(summary, summary_dev, cfg, args, model, dataloader,
         output, logit_map = model(image)
         # get the loss
         if cfg.criterion == 'HINGE':
-            loss = loss_sq_hinge(output, target)
+            loss = loss_sq_hinge(torch.FloatTensor(output), target)
             loss_sum += loss.item()
             acc_t  = torch.sigmoid(output).ge(0.5).eq(target).sum() / len(image)
             acc_sum += acc_t.item()
