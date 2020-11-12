@@ -145,16 +145,17 @@ def train_epoch(summary, summary_dev, cfg, args, model, dataloader,
         target = target.to(device).float()
         output, logit_map = model(image)
         # get the loss
+        output_torch = torch.from_numpy(np.array(output))
         if cfg.criterion == 'HINGE':
-            loss = loss_sq_hinge(torch.FloatTensor(output), target)
+            loss = loss_sq_hinge(output_torch, target)
             loss_sum += loss.item()
-            acc_t  = torch.sigmoid(output).ge(0.5).eq(target).sum() / len(image)
+            acc_t  = torch.sigmoid(output_torch).ge(0.5).eq(target).sum() / len(image)
             acc_sum += acc_t.item()
         elif cfg.criterion == 'HINGE_BCE':
             #hinge
             loss = 0
-            loss_hinge = loss_sq_hinge(output, target)
-            acc_hinge  = torch.sigmoid(output).ge(0.5).float().eq(target).float().sum() / len(image)
+            loss_hinge = loss_sq_hinge(output_torch, target)
+            acc_hinge  = torch.sigmoid(output_torch).ge(0.5).float().eq(target).float().sum() / len(image)
             #bce
             loss_bce = 0
             for t in range(num_tasks):
@@ -318,16 +319,17 @@ def test_epoch(summary, cfg, args, model, dataloader, q_list, k_list):
         target = target.to(device).float()
         output, logit_map = model(image)
         # get the loss
+        output_torch = torch.from_numpy(np.array(output))
         if cfg.criterion == 'HINGE':
-            loss = loss_sq_hinge(output, target)
+            loss = loss_sq_hinge(output_torch, target)
             loss_sum += loss.item()
-            acc_t  = torch.sigmoid(output).ge(0.5).eq(target).sum() / len(image)
+            acc_t  = torch.sigmoid(output_torch).ge(0.5).eq(target).sum() / len(image)
             acc_sum += acc_t.item()
         elif cfg.criterion == 'HINGE_BCE':
             #hinge
             loss = 0
-            loss_hinge = loss_sq_hinge(output, target)
-            acc_hinge  = torch.sigmoid(output).ge(0.5).float().eq(target).float().sum() / len(image)
+            loss_hinge = loss_sq_hinge(output_torch, target)
+            acc_hinge  = torch.sigmoid(output_torch).ge(0.5).float().eq(target).float().sum() / len(image)
             #bce
             loss_bce = 0
             for t in range(num_tasks):
