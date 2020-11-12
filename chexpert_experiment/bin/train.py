@@ -144,7 +144,7 @@ def train_epoch(summary, summary_dev, cfg, args, model, dataloader,
             #hinge
             loss = 0
             loss_hinge = loss_sq_hinge(output, target)
-            acc_hinge  = torch.sigmoid(output).ge(0.5).float().eq(target).float().sum() / len(image)s
+            acc_hinge  = torch.sigmoid(output).ge(0.5).float().eq(target).float().sum() / len(image)
             #bce
             loss_bce = 0
             for t in range(num_tasks):
