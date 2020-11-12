@@ -28,6 +28,16 @@ from utils.misc import lr_schedule  # noqa
 from model.utils import get_optimizer  # noqa
 
 import h5py
+import datetime
+def print_remaining_time(before, currentPosition, totalSize, additional=''):
+  after = datetime.datetime.now()
+  elaspsed_time = (after - before).seconds
+  estimated_remaining_time = elaspsed_time * (totalSize - currentPosition) / currentPosition
+  
+  ratio = (100*currentPosition/totalSize)
+  msg = f'{additional}{currentPosition}/{totalSize}({ratio:.2f}%) finished. Estimated Remaining Time: {estimated_remaining_time:.2f} seconds.'
+  print("\r", end='')# this is needed to remov
+  print(msg, end='', flush=True)
 
 class MultiClassSquaredHingeLoss(nn.Module):
     def __init__(self):
@@ -445,6 +455,7 @@ def run(args, val_h5_file):
     q_list = torch.FloatTensor(q_list)
     loss_sq_hinge = MultiClassSquaredHingeLoss()
     print('Everything is set starting to train...')
+    before = datetime.datetime.now()
     for epoch in range(epoch_start, cfg.epoch):
         lr = lr_schedule(cfg.lr, cfg.lr_factor, summary_train['epoch'],
                          cfg.lr_epochs)
@@ -550,6 +561,8 @@ def run(args, val_h5_file):
                     'loss_dev_best': best_dict['loss_dev_best'],
                     'state_dict': model.module.state_dict()},
                    os.path.join(args.save_path, 'train.ckpt'))
+
+        print_remaining_time(before, epoch+1, cfg.epoch, additional='[training]')
     summary_writer.close()
 
 
