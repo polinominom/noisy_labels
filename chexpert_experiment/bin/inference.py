@@ -580,7 +580,9 @@ elif args.mode == 'run':
         print(f'Normal acc: {summary["acc"]}')
         print(f'Normal auc: {summary["auc"]}')
     #
-    RoG_acc = test_ensemble(G_soft_list, soft_weight, [test_data], inference_test_data_test_labels, cfg)
-    print(f'RoG accuracy: {RoG_acc}')
+    rog_summary = test_ensemble(G_soft_list, soft_weight, [test_data], inference_test_data_test_labels, cfg)
+    print(f'RoG accuracy: {rog_summary['rog_acc']}')
+    print(f'RoG AUC     : {rog_summary['rog_auc']}')
     #
-    log_result(args, {'soft_acc':acc_traditional}, {'rog_acc':RoG_acc})
+    log_result(args, {'normal acc':summary['acc'],      'normal auc':summary['auc']}, 
+                     {'rog acc':rog_summary['rog_acc'], 'rog auc':rog_summary['rog_auc']})
