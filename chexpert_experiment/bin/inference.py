@@ -329,7 +329,7 @@ def test_ensemble(G_soft_list, soft_weight, total_val_data, total_val_label, cfg
             pred = total_out.ge(0.5).float()
             equal_flag = pred.eq(target.data.float()).cpu()
             correct_D += equal_flag.sum() / num_clases
-            print_remaining_time(before, data_index + 1, iteration_count, additional='[test_ensemble]')
+            print_remaining_time(before, data_index + 1, data_length, additional='[test_ensemble]')
         
         summary = {}
         auclist = np.zeros(num_classes)
