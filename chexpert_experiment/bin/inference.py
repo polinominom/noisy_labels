@@ -307,7 +307,6 @@ def test_ensemble(G_soft_list, soft_weight, total_val_data, total_val_label, cfg
     with torch.no_grad():
         correct_D = 0
         num_output = len(G_soft_list)
-        num_clases = total_val_label.size(1)
         before = datetime.datetime.now()
         for data_index in range(data_length):
             target = total_val_label[data_index].cpu()
@@ -323,6 +322,8 @@ def test_ensemble(G_soft_list, soft_weight, total_val_data, total_val_label, cfg
                     total_out += soft_weight[i]*output
                     
             #pred = torch.sigmoid(total_out).ge(0.5).float()
+            print(output)
+            print(logits)
             print(total_out)
             for j in range(num_classes):
                 predList[j][data_index] = total_out[j]
