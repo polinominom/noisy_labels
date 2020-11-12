@@ -143,8 +143,7 @@ def train_epoch(summary, summary_dev, cfg, args, model, dataloader,
         image = image.to(device).float()
         target = target.to(device).float()
         output, logit_map = model(image)
-
-        # different number of tasks
+        # get the loss
         if cfg.criterion == 'HINGE':
             loss = loss_sq_hinge(output, target)
             loss_sum += loss.item()
@@ -317,22 +316,33 @@ def test_epoch(summary, cfg, args, model, dataloader, q_list, k_list):
         image = image.to(device).float()
         target = target.to(device).float()
         output, logit_map = model(image)
-        # different number of tasks
-        if cfg.cr
-        for t in range(len(cfg.num_classes)):
-            loss_t, acc_t = get_loss(output, target, t, device, q_list,k_list,[],cfg)
-            # AUC
-            output_tensor = torch.sigmoid(output[t].view(-1)).cpu().detach().numpy()
-            target_tensor = target[:, t].view(-1).cpu().detach().numpy()
-            if step == 0:
-                predlist[t] = output_tensor
-                true_list[t] = target_tensor
-            else:
-                predlist[t] = np.append(predlist[t], output_tensor)
-                true_list[t] = np.append(true_list[t], target_tensor)
-
-            loss_sum[t] += loss_t.item()
-            acc_sum[t] += acc_t.item()
+        # get the loss
+        if cfg.criterion == 'HINGE':
+            loss = loss_sq_hinge(output, target)
+            loss_sum += loss.item()
+            acc_t  = torch.sigmoid(output).ge(0.5).eq(target).sum() / len(image)
+            acc_sum += acc_t.item()
+        elif cfg.criterion == 'HINGE_BCE':
+            #hinge
+            loss = 0
+            loss_hinge = loss_sq_hinge(output, target)
+            acc_hinge  = torch.sigmoid(output).ge(0.5).float().eq(target).float().sum() / len(image)
+            #bce
+            loss_bce = 0
+            for t in range(num_tasks):
+                loss_t, acc_t = get_loss(output, target, t, device, q_list, k_list, [], cfg)
+                loss_general = (loss_t + loss_hinge[t]).div(2)
+                loss        += loss_general
+                loss_sum[t] += loss_general.item()
+                acc_sum[t]  += (acc_t.item() + acc_hinge.item())
+        else:
+            loss = 0
+            for t in range(num_tasks):
+                loss_t, acc_t = get_loss(output, target, t, device, q_list, k_list, [], cfg)
+                loss += loss_t
+                loss_sum[t] += loss_t.item()
+                acc_sum[t] += acc_t.item()
+                
     summary['loss'] = loss_sum / steps
     summary['acc'] = acc_sum / steps
 
