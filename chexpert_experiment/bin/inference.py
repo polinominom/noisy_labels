@@ -289,15 +289,15 @@ def test_epoch(device, cfg, model, dataloader):
                 predList[t] = output_tensor
                 trueList[t] = target_tensor
             else:
-                predList[t] = np.append(predlist[t], output_tensor)
-                trueList[t] = np.append(true_list[t], target_tensor)
+                predList[t] = np.append(predList[t], output_tensor)
+                trueList[t] = np.append(trueList[t], target_tensor)
 
             loss_sum[t] += loss_t.item()
             acc_sum[t] += acc_t.item()
     summary['loss'] = loss_sum / steps
     summary['acc'] = acc_sum / steps
 
-    return summary, predlist, true_list
+    return summary, predList, trueList
 
 def test_ensemble(G_soft_list, soft_weight, total_val_data, total_val_label, cfg):
     num_classes = len(cfg.num_classes)
@@ -571,8 +571,8 @@ elif args.mode == 'run':
         summary, predList, trueList = test_epoch(device, cfg, model, dataloader_dev)
         auclist = []
         for i in range(len(cfg.num_classes)):
-            y_pred = predlist[i]
-            y_true = true_list[i]
+            y_pred = predList[i]
+            y_true = trueList[i]
             fpr, tpr, thresholds = metrics.roc_curve(y_true, y_pred, pos_label=1)
             auc = metrics.auc(fpr, tpr)
             auclist.append(auc)
