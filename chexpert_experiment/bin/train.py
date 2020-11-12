@@ -46,7 +46,7 @@ class MultiClassSquaredHingeLoss(nn.Module):
 
 
     def forward(self, output, y): #output: batchsize*n_class
-        n_class = y.size()[1]
+        n_class = 1
         #margin = 1 
         margin = 1
         #isolate the score for the true class
