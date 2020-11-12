@@ -324,26 +324,29 @@ def test_ensemble(G_soft_list, soft_weight, total_val_data, total_val_label, cfg
                     
             #pred = torch.sigmoid(total_out).ge(0.5).float()
             for j in range(num_classes):
+                print(f'{total_out:.1f}')
                 predList[j][data_index] = total_out[j]
                 trueList[j][data_index] = target[j]
             pred = total_out.ge(0.5).float()
-            equal_flag = pred.eq(target.data.float()).cpu()
-            correct_D += equal_flag.sum() / num_clases
+            #acc = (target == pred).float().sum() / len(pred)
+            #correct_D[j] = equal_flag.sum() / num_clases
             print_remaining_time(before, data_index + 1, data_length, additional='[test_ensemble]')
         
         summary = {}
         auclist = np.zeros(num_classes)
+        acclist = np.zeros(num_classes)
         for i in range(num_classes):
             y_pred = predList[i]
             y_true = trueList[i]
             fpr, tpr, thresholds = metrics.roc_curve(y_true, y_pred, pos_label=1)
             auc = metrics.auc(fpr, tpr)
             auclist[i] = auc
+            acclist[i] = (y_true==y_pred).sum().float()/len(y_pred)
         
         # auc
         summary['rog_auc'] = auclist
         # acc
-        summary['rog_acc'] = 100. * correct_D / data_length
+        summary['rog_acc'] = acclist
         return summary
 
 def extract_features(device, model, dataloader, batch_size, file_root, data_name):
