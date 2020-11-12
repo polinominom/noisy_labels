@@ -167,16 +167,16 @@ def train_weights(G_soft_list, total_val_data, total_val_label, batch_size,cfg):
     #nllloss = F.binary_cross_entropy_with_logits
     # parameyer
     num_ensemble = len(G_soft_list)
-    train_weights = torch.Tensor(num_ensemble, 1).fill_(1).cpu()
-    train_weights = nn.Parameter(train_weights)
+    _train_weights = torch.Tensor(num_ensemble, 1).fill_(1).cpu()
+    _train_weights = nn.Parameter(_train_weights)
     total, correct_D = 0, 0
-    optimizer = optim.Adam([train_weights], lr=1e-4)
+    optimizer = optim.Adam([_train_weights], lr=1e-4)
     total_epoch = 100
     total_num_data = total_val_data[0].size(0)
 
     for data_index in range(int(np.floor(total_num_data/batch_size))):
         target = total_val_label[total : total + batch_size].cpu()
-        soft_weight = torch.sigmoid(train_weights)
+        soft_weight = torch.sigmoid(_train_weights)
         total_out = 0
 
         for i in range(num_ensemble):
@@ -205,17 +205,15 @@ def train_weights(G_soft_list, total_val_data, total_val_label, batch_size,cfg):
 
             def closure():
                 optimizer.zero_grad()
-                soft_weight = torch.sigmoid(train_weights)
+                soft_weight = torch.sigmoid(_train_weights)
 
                 total_out = 0
                 for i in range(num_ensemble):
                     out_features = torch.index_select(total_val_data[i], 0, index).cpu()
                     output = torch.sigmoid(G_soft_list[i](out_features))
-                    print(output.shape)
-                    print(soft_weight.shape)
                     total_out = torch.zeros(num_classes)
                     for j in range(num_classes):
-                        total_out[j] += torch.log(soft_weight[i][j]*output[j] + 10**(-10))
+                        total_out[j] += torch.log(soft_weight[i]*output[j] + 10**(-10))
                         
                 loss = F.binary_cross_entropy_with_logits(total_out.float(), target.float())
                 loss.backward()
@@ -225,7 +223,8 @@ def train_weights(G_soft_list, total_val_data, total_val_label, batch_size,cfg):
         print_remaining_time(before, epoch+1, total_epoch,additional='[train inference weights]')
     correct_D, total = 0, 0    
 
-    soft_weight = torch.sigmoid(train_weights)
+    soft_weight = torch.sigmoid(_train_weights)
+    print(f'SOFT WEIGHT: {soft_weight}')
     return soft_weight
 
 def get_loss(output, target, index, device, cfg):
