@@ -320,6 +320,7 @@ def test_epoch(summary, cfg, args, model, dataloader, q_list, k_list, loss_sq_hi
             target = target.to(device).float()
             output, logit_map = model(image)
             # get the loss
+            loss = 0
             if cfg.criterion == 'HINGE':
                 for t in range(num_tasks):
                     loss_t = loss_sq_hinge(output[t], target[t])
