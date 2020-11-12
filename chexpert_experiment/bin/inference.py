@@ -546,7 +546,7 @@ elif args.mode == 'run':
         new_val_data_list.append(new_val_data)
     print('Finding softweights...')
     
-    soft_weight = train_weights(G_soft_list, new_val_data_list, new_val_label, args.batch_size)
+    soft_weight = train_weights(G_soft_list, new_val_data_list, new_val_label, args.batch_size, cfg)
     #
     with torch.no_grad():
         summary, predList, trueList = test_epoch(device, cfg, model, dataloader_dev)
