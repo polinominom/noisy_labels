@@ -271,8 +271,8 @@ def test_epoch(device, cfg, model, dataloader):
     loss_sum = np.zeros(num_tasks)
     acc_sum = np.zeros(num_tasks)
 
-    predlist = list(x for x in range(len(cfg.num_classes)))
-    true_list = list(x for x in range(len(cfg.num_classes)))
+    predList = list(x for x in range(len(cfg.num_classes)))
+    trueList = list(x for x in range(len(cfg.num_classes)))
     for step in range(steps):
         image, target = next(dataiter)
         image = image.to(device).float()
@@ -285,11 +285,11 @@ def test_epoch(device, cfg, model, dataloader):
             output_tensor = torch.sigmoid(output[t].view(-1)).cpu().detach().numpy()
             target_tensor = target[:, t].view(-1).cpu().detach().numpy()
             if step == 0:
-                predlist[t] = output_tensor
-                true_list[t] = target_tensor
+                predList[t] = output_tensor
+                trueList[t] = target_tensor
             else:
-                predlist[t] = np.append(predlist[t], output_tensor)
-                true_list[t] = np.append(true_list[t], target_tensor)
+                predList[t] = np.append(predlist[t], output_tensor)
+                trueList[t] = np.append(true_list[t], target_tensor)
 
             loss_sum[t] += loss_t.item()
             acc_sum[t] += acc_t.item()
@@ -567,7 +567,7 @@ elif args.mode == 'run':
     soft_weight = train_weights(G_soft_list, new_val_data_list, new_val_label, args.batch_size)
     #
     with torch.no_grad():
-        summary, predList trueList = test_epoch(device, cfg, model, dataloader_dev)
+        summary, predList, trueList = test_epoch(device, cfg, model, dataloader_dev)
         auclist = []
         for i in range(len(cfg.num_classes)):
             y_pred = predlist[i]
