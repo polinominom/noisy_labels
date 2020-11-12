@@ -145,7 +145,7 @@ def train_epoch(summary, summary_dev, cfg, args, model, dataloader,
         target = target.to(device).float()
         output, logit_map = model(image)
         # get the loss
-        print(len(output))
+        print(output)
         output_torch = torch.from_numpy(np.array(output))
         if cfg.criterion == 'HINGE':
             loss = loss_sq_hinge(output_torch, target)
