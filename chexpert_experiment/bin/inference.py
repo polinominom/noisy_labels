@@ -161,7 +161,8 @@ def make_validation(feature, total_label, sample_mean, inverse_covariance, num_c
     return selected_idx
 
 from torch.autograd import Variable
-def train_weights(G_soft_list, total_val_data, total_val_label, batch_size):
+def train_weights(G_soft_list, total_val_data, total_val_label, batch_size,cfg):
+    num_classes = len(cfg.num_classes)
     # loss function
     #nllloss = F.binary_cross_entropy_with_logits
     # parameyer
@@ -169,8 +170,8 @@ def train_weights(G_soft_list, total_val_data, total_val_label, batch_size):
     train_weights = torch.Tensor(num_ensemble, 1).fill_(1).cpu()
     train_weights = nn.Parameter(train_weights)
     total, correct_D = 0, 0
-    optimizer = optim.Adam([train_weights], lr=0.02)
-    total_epoch = 20
+    optimizer = optim.Adam([train_weights], lr=1e-4)
+    total_epoch = 100
     total_num_data = total_val_data[0].size(0)
 
     for data_index in range(int(np.floor(total_num_data/batch_size))):
@@ -180,7 +181,6 @@ def train_weights(G_soft_list, total_val_data, total_val_label, batch_size):
 
         for i in range(num_ensemble):
             out_features = total_val_data[i][total : total + batch_size].cpu()
-            feature_dim = out_features.size(1)
             output = torch.sigmoid(G_soft_list[i](out_features))
             if i == 0:
                 total_out = soft_weight[i]*output
@@ -191,7 +191,8 @@ def train_weights(G_soft_list, total_val_data, total_val_label, batch_size):
         pred = torch.sigmoid(total_out).ge(0.5).float()
         equal_flag = pred.eq(target.data.float()).cpu()
         correct_D += equal_flag.sum()
-            
+
+    before = datetime.datetime.now()
     for epoch in range(total_epoch):
         total = 0
         shuffler_idx = torch.randperm(total_num_data)
@@ -209,45 +210,19 @@ def train_weights(G_soft_list, total_val_data, total_val_label, batch_size):
                 total_out = 0
                 for i in range(num_ensemble):
                     out_features = torch.index_select(total_val_data[i], 0, index).cpu()
-                    #out_features = Variable(out_features)
-                    #feature_dim = out_features.size(1)
-                    #output = torch.sigmoid(G_soft_list[i](out_features))
-                    output = G_soft_list[i](out_features)
-                    
-                    if i == 0:
-                        total_out = soft_weight[i]*output
-                    else:
-                        total_out += soft_weight[i]*output
+                    output = torch.sigmoid(G_soft_list[i](out_features))
+                    total_out = torch.zeros(num_classes)
+                    for j in range(num_classes):
+                        total_out[j] += torch.log(soft_weight[i][j]*output[j] + 10**(-10))
                         
-                total_out = torch.log(total_out + 10**(-10))
                 loss = F.binary_cross_entropy_with_logits(total_out.float(), target.float())
                 loss.backward()
                 return loss
 
             optimizer.step(closure)
-        
-    correct_D, total = 0, 0
-    
-    for data_index in range(int(np.floor(total_num_data/batch_size))):
-        target = total_val_label[total : total + batch_size].cpu()
-        soft_weight = torch.sigmoid(train_weights)
-        total_out = 0
+        print_remaining_time(before, epoch+1, total_epoch,additional='[train inference weights]')
+    correct_D, total = 0, 0    
 
-        for i in range(num_ensemble):
-            out_features = total_val_data[i][total : total + batch_size].cpu()
-            #out_features = Variable(out_features, volatile=True)
-            feature_dim = out_features.size(1)
-            output = torch.sigmoid(G_soft_list[i](out_features))
-            if i == 0:
-                total_out = soft_weight[i]*output
-            else:
-                total_out += soft_weight[i]*output
-                
-        total += batch_size
-        pred = torch.sigmoid(total_out).ge(0.5).float()
-        equal_flag = pred.eq(target.data.float()).cpu()
-        correct_D += equal_flag.sum()
-        
     soft_weight = torch.sigmoid(train_weights)
     return soft_weight
 
