@@ -211,6 +211,8 @@ def train_weights(G_soft_list, total_val_data, total_val_label, batch_size,cfg):
                 for i in range(num_ensemble):
                     out_features = torch.index_select(total_val_data[i], 0, index).cpu()
                     output = torch.sigmoid(G_soft_list[i](out_features))
+                    print(output.shape)
+                    print(soft_weight.shape)
                     total_out = torch.zeros(num_classes)
                     for j in range(num_classes):
                         total_out[j] += torch.log(soft_weight[i][j]*output[j] + 10**(-10))
