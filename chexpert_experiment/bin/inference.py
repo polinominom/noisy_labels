@@ -259,6 +259,7 @@ def get_loss(output, target, index, device, cfg):
         loss    = F.binary_cross_entropy_with_logits(output[index].view(-1), target)
         label   = torch.sigmoid(output[index].view(-1)).ge(0.5).float()
         acc     = (target == label).float().sum() / len(label)
+        return (loss, acc) 
 
 def test_epoch(device, cfg, model, dataloader):
     summary = {}
@@ -279,7 +280,7 @@ def test_epoch(device, cfg, model, dataloader):
         target = target.to(device).float()
         output, logit_map = model(image)
         # different number of tasks
-        for t in range(len(cfg.num_classes)):
+        for t in range(num_tasks):
             loss_t, acc_t = get_loss(output, target, t, device, cfg)
             # AUC
             output_tensor = torch.sigmoid(output[t].view(-1)).cpu().detach().numpy()
