@@ -163,7 +163,7 @@ def make_validation(feature, total_label, sample_mean, inverse_covariance, num_c
 from torch.autograd import Variable
 def train_weights(G_soft_list, total_val_data, total_val_label, batch_size):
     # loss function
-    nllloss = F.binary_cross_entropy_with_logits
+    #nllloss = F.binary_cross_entropy_with_logits
     # parameyer
     num_ensemble = len(G_soft_list)
     train_weights = torch.Tensor(num_ensemble, 1).fill_(1).cpu()
@@ -211,7 +211,8 @@ def train_weights(G_soft_list, total_val_data, total_val_label, batch_size):
                     out_features = torch.index_select(total_val_data[i], 0, index).cpu()
                     #out_features = Variable(out_features)
                     #feature_dim = out_features.size(1)
-                    output = torch.sigmoid(G_soft_list[i](out_features))
+                    #output = torch.sigmoid(G_soft_list[i](out_features))
+                    output = G_soft_list[i](out_features)
                     
                     if i == 0:
                         total_out = soft_weight[i]*output
@@ -219,7 +220,7 @@ def train_weights(G_soft_list, total_val_data, total_val_label, batch_size):
                         total_out += soft_weight[i]*output
                         
                 total_out = torch.log(total_out + 10**(-10))
-                loss = nllloss(total_out.float(), target.float())
+                loss = F.binary_cross_entropy_with_logits(total_out.float(), target.float())
                 loss.backward()
                 return loss
 
@@ -389,7 +390,8 @@ def log_result(args, r_result, rog_result):
     result_file_list = []
     for c in contents:
         if 'rog_result_' in c:
-            result_file_list.append(int(c.split('_')[-1]))
+            z = int(c.split('_')[-1].split('.txt')[0])
+            result_file_list.append(z)
     m = -1
     if result_file_list != []:
         m = max(result_file_list)
