@@ -576,8 +576,8 @@ elif args.mode == 'run':
             auc = metrics.auc(fpr, tpr)
             auclist.append(auc)
         summary['auc'] = np.array(auclist)
-        print(f'Normal acc: {summary['acc']}')
-        print(f'Normal auc: {summary['auc']}')
+        print(f'Normal acc: {summary["acc"]}')
+        print(f'Normal auc: {summary["auc"]}')
     #
     RoG_acc = test_ensemble(G_soft_list, soft_weight, [test_data], inference_test_data_test_labels, args.batch_size)
     print(f'RoG accuracy: {RoG_acc}')
