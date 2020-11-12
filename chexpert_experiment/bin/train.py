@@ -152,13 +152,13 @@ def train_epoch(summary, summary_dev, cfg, args, model, dataloader,
                 loss_t = loss_sq_hinge(output[t], target[t])
                 loss += loss_t
                 loss_sum[t] += loss.item()
-                acc_t  = torch.sigmoid(output_torch).ge(0.5).eq(target).sum() / len(image)
+                acc_t  = torch.sigmoid(output[t]).ge(0.5).eq(target).sum() / len(image)
                 acc_sum[t] += acc_t.item()
         elif cfg.criterion == 'HINGE_BCE':
             for t in range(num_tasks):
                 #hinge
                 loss_hinge = loss_sq_hinge(output[t], target[t])
-                acc_hinge  = torch.sigmoid(output_torch).ge(0.5).float().eq(target).float().sum() / len(image)
+                acc_hinge  = torch.sigmoid(output[t]).ge(0.5).float().eq(target).float().sum() / len(image)
                 #bce
                 loss_t, acc_t = get_loss(output, target, t, device, q_list, k_list, [], cfg)
                 loss_general = (loss_t + loss_hinge).div(2)
@@ -324,19 +324,19 @@ def test_epoch(summary, cfg, args, model, dataloader, q_list, k_list):
                 loss_t = loss_sq_hinge(output[t], target[t])
                 loss += loss_t
                 loss_sum[t] += loss.item()
-                acc_t  = torch.sigmoid(output_torch).ge(0.5).eq(target).sum() / len(image)
+                acc_t  = torch.sigmoid(output[t]).ge(0.5).eq(target).sum() / len(image)
                 acc_sum[t] += acc_t.item()
         elif cfg.criterion == 'HINGE_BCE':
             for t in range(num_tasks):
                 #hinge
                 loss_hinge = loss_sq_hinge(output[t], target[t])
-                acc_hinge  = torch.sigmoid(output_torch).ge(0.5).float().eq(target).float().sum() / len(image)
+                acc_hinge  = torch.sigmoid(output[t]).ge(0.5).float().eq(target).float().sum() / len(image)
                 #bce
                 loss_t, acc_t = get_loss(output, target, t, device, q_list, k_list, [], cfg)
                 loss_general = (loss_t + loss_hinge).div(2)
                 loss        += loss_general
                 loss_sum[t] += loss_general.item()
-                acc_sum[t]  += (acc_t.item() + acc_hinge.item())
+                acc_sum[t]  += (acc_t.item() + acc_hinge.item())/2
         else:
             for t in range(num_tasks):
                 loss_t, acc_t = get_loss(output, target, t, device, q_list, k_list, [], cfg)
