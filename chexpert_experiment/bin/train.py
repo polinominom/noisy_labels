@@ -29,6 +29,36 @@ from model.utils import get_optimizer  # noqa
 
 import h5py
 
+class MultiClassSquaredHingeLoss(nn.Module):
+    def __init__(self):
+        super(MultiClassSquaredHingeLoss, self).__init__()
+
+
+    def forward(self, output, y): #output: batchsize*n_class
+        n_class = y.size()[1]
+        #margin = 1 
+        margin = 1
+        #isolate the score for the true class
+        y_out = torch.sum(torch.mul(output, y)).cuda()
+        output_y = torch.mul(torch.ones(n_class).cuda(), y_out).cuda()
+        #create an opposite to the one hot encoded tensor
+        anti_y = torch.ones(n_class).cuda() - y.cuda()
+        
+        loss = output.cuda() - output_y.cuda() + margin
+        loss = loss.cuda()
+        #remove the element of the loss corresponding to the true class
+        loss = torch.mul(loss.cuda(), anti_y.cuda()).cuda()
+        #max(0,_)
+        loss = torch.max(loss.cuda(), torch.zeros(n_class).cuda())
+        #squared hinge loss
+        loss = torch.pow(loss, 2).cuda()
+        #sum up
+        loss = torch.sum(loss).cuda()
+        loss = loss / n_class        
+        
+        return loss
+
+
 parser = argparse.ArgumentParser(description='Train model')
 parser.add_argument('cfg_path', default=None, metavar='CFG_PATH', type=str, help="Path to the config file in yaml format")
 parser.add_argument('save_path', default=None, metavar='SAVE_PATH', type=str, help="Path to the saved models")
@@ -85,7 +115,7 @@ def get_loss(output, target, index, device, gce_q_list, gce_k_list, gce_weight_l
 
 def train_epoch(summary, summary_dev, cfg, args, model, dataloader,
                 dataloader_dev, optimizer, summary_writer, best_dict,
-                dev_header, q_list, k_list):
+                dev_header, q_list, k_list, loss_sq_hinge):
     torch.set_grad_enabled(True)
     model.train()
     device_ids = list(map(int, args.device_ids.split(',')))
@@ -105,12 +135,31 @@ def train_epoch(summary, summary_dev, cfg, args, model, dataloader,
         output, logit_map = model(image)
 
         # different number of tasks
-        loss = 0
-        for t in range(num_tasks):
-            loss_t, acc_t = get_loss(output, target, t, device, q_list, k_list, [], cfg)
-            loss += loss_t
-            loss_sum[t] += loss_t.item()
-            acc_sum[t] += acc_t.item()
+        if cfg.criterion == 'HINGE':
+            loss = loss_sq_hinge(output, target)
+            loss_sum += loss.item()
+            acc_t  = torch.sigmoid(output).ge(0.5).eq(target).sum() / len(image)
+            acc_sum += acc_t.item()
+        elif cfg.criterion == 'HINGE_BCE':
+            #hinge
+            loss = 0
+            loss_hinge = loss_sq_hinge(output, target)
+            acc_hinge  = torch.sigmoid(output).ge(0.5).float().eq(target).float().sum() / len(image)s
+            #bce
+            loss_bce = 0
+            for t in range(num_tasks):
+                loss_t, acc_t = get_loss(output, target, t, device, q_list, k_list, [], cfg)
+                loss_general = (loss_t + loss_hinge[t]).div(2)
+                loss        += loss_general
+                loss_sum[t] += loss_general.item()
+                acc_sum[t]  += (acc_t.item() + acc_hinge.item())
+        else:
+            loss = 0
+            for t in range(num_tasks):
+                loss_t, acc_t = get_loss(output, target, t, device, q_list, k_list, [], cfg)
+                loss += loss_t
+                loss_sum[t] += loss_t.item()
+                acc_sum[t] += acc_t.item()
 
         optimizer.zero_grad()
         loss.backward()
@@ -259,12 +308,11 @@ def test_epoch(summary, cfg, args, model, dataloader, q_list, k_list):
         target = target.to(device).float()
         output, logit_map = model(image)
         # different number of tasks
+        if cfg.cr
         for t in range(len(cfg.num_classes)):
-
             loss_t, acc_t = get_loss(output, target, t, device, q_list,k_list,[],cfg)
             # AUC
-            output_tensor = torch.sigmoid(
-                output[t].view(-1)).cpu().detach().numpy()
+            output_tensor = torch.sigmoid(output[t].view(-1)).cpu().detach().numpy()
             target_tensor = target[:, t].view(-1).cpu().detach().numpy()
             if step == 0:
                 predlist[t] = output_tensor
@@ -395,7 +443,7 @@ def run(args, val_h5_file):
 
     k_list = torch.FloatTensor(k_list)
     q_list = torch.FloatTensor(q_list)
-    
+    loss_sq_hinge = MultiClassSquaredHingeLoss()
     print('Everything is set starting to train...')
     for epoch in range(epoch_start, cfg.epoch):
         lr = lr_schedule(cfg.lr, cfg.lr_factor, summary_train['epoch'],
@@ -406,7 +454,7 @@ def run(args, val_h5_file):
         summary_train, best_dict = train_epoch(
             summary_train, summary_dev, cfg, args, model,
             dataloader_train, dataloader_dev, optimizer,
-            summary_writer, best_dict, dev_header, q_list, k_list)
+            summary_writer, best_dict, dev_header, q_list, k_list, loss_sq_hinge)
 
         time_now = time.time()
         summary_dev, predlist, true_list = test_epoch(
