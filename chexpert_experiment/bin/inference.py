@@ -210,7 +210,7 @@ def train_weights(G_soft_list, total_val_data, total_val_label, batch_size):
                 for i in range(num_ensemble):
                     out_features = torch.index_select(total_val_data[i], 0, index).cpu()
                     #out_features = Variable(out_features)
-                    feature_dim = out_features.size(1)
+                    #feature_dim = out_features.size(1)
                     output = torch.sigmoid(G_soft_list[i](out_features))
                     
                     if i == 0:
@@ -314,7 +314,7 @@ def test_ensemble(G_soft_list, soft_weight, total_val_data, total_val_label, cfg
             total_out = 0
             for i in range(num_output):
                 out_features = total_val_data[i][data_index].cpu()
-                feature_dim = out_features.size(1)
+                #feature_dim = out_features.size(1)
                 logits = G_soft_list[i](out_features.cpu())
                 output = torch.sigmoid(logits)
                 if i == 0:
