@@ -321,28 +321,30 @@ def test_epoch(summary, cfg, args, model, dataloader, q_list, k_list, loss_sq_hi
             output, logit_map = model(image)
             # get the loss
             #loss = 0
-            if cfg.criterion == 'HINGE':
-                for t in range(num_tasks):
-             #       loss_sum[t] += loss.item()
+            for t in range(num_tasks):
+                if cfg.criterion == 'HINGE':
                     acc_t  = torch.sigmoid(output[t]).ge(0.5).eq(target).sum() / len(image)
                     acc_sum[t] += acc_t.item()
-            elif cfg.criterion == 'HINGE_BCE':
-                for t in range(num_tasks):
-                    #hinge
-                    # loss_hinge = loss_sq_hinge(output[t], target[t])
+
+                elif cfg.criterion == 'HINGE_BCE':
                     acc_hinge  = torch.sigmoid(output[t]).ge(0.5).float().eq(target).float().sum() / len(image)
-                    #bce
                     loss_t, acc_t = get_loss(output, target, t, device, q_list, k_list, [], cfg)
                     loss_general = (loss_t + loss_hinge).div(2)
                     loss        += loss_general
-                    # loss_sum[t] += loss_general.item()
                     acc_sum[t]  += (acc_t.item() + acc_hinge.item())/2
-            else:
-                for t in range(num_tasks):
+                else:
                     loss_t, acc_t = get_loss(output, target, t, device, q_list, k_list, [], cfg)
                     loss += loss_t
-                    # loss_sum[t] += loss_t.item()
                     acc_sum[t] += acc_t.item()
+
+                output_tensor = torch.sigmoid(output[t].view(-1)).cpu().detach().numpy()
+                target_tensor = target[:, t].view(-1).cpu().detach().numpy()
+                if step == 0:
+                    predlist[t] = output_tensor
+                    true_list[t] = target_tensor
+                else:
+                    predlist[t] = np.append(predlist[t], output_tensor)
+                    true_list[t] = np.append(true_list[t], target_tensor)
 
         # summary['loss'] = loss_sum / steps
         summary['acc'] = acc_sum / steps
