@@ -150,12 +150,12 @@ def train_epoch(summary, summary_dev, cfg, args, model, dataloader,
         loss = 0
         if cfg.criterion == 'HINGE':
             for t in range(num_tasks):
-                target = target[:, t].view(-1)
-                output = output[t].view(-1)
-                loss_t = loss_sq_hinge(output, target)
+                target_hinge = target[:,t].view(-1)
+                output_hinge = output[t].view(-1)
+                loss_t = loss_sq_hinge(output_hinge, target_hinge)
                 loss += loss_t
                 loss_sum[t] += loss.item()
-                acc_t  = torch.sigmoid(output).ge(0.5).eq(target).sum() / len(image)
+                acc_t  = torch.sigmoid(output_hinge).ge(0.5).eq(target_hinge).sum() / len(image)
                 acc_sum[t] += acc_t.item()
         elif cfg.criterion == 'HINGE_BCE':
             for t in range(num_tasks):
