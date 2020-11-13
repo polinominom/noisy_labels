@@ -330,7 +330,7 @@ def test_epoch(summary, cfg, args, model, dataloader, q_list, k_list, loss_sq_hi
                 if cfg.criterion == 'HINGE':
                     target_hinge = target[:, t].view(-1)
                     output_hinge = output[t].view(-1)
-                    loss_t = loss_sq_hinge(output, target)
+                    loss_t = loss_sq_hinge(target_hinge, output_hinge)
                     loss += loss_t
                     loss_sum[t] += loss.item()
                     acc_t  = torch.sigmoid(output_hinge).ge(0.5).eq(target_hinge).sum() / len(image)
