@@ -314,7 +314,7 @@ def test_epoch(summary, cfg, args, model, dataloader, q_list, k_list, loss_sq_hi
         dataiter = iter(dataloader)
         num_tasks = len(cfg.num_classes)
 
-        #loss_sum = np.zeros(num_tasks)
+        loss_sum = np.zeros(num_tasks)
         acc_sum = np.zeros(num_tasks)
 
         predlist = list(x for x in range(len(cfg.num_classes)))
@@ -328,12 +328,12 @@ def test_epoch(summary, cfg, args, model, dataloader, q_list, k_list, loss_sq_hi
             loss = 0
             for t in range(num_tasks):
                 if cfg.criterion == 'HINGE':
-                    target = target[:, t].view(-1)
-                    output = output[t].view(-1)
+                    target_hinge = target[:, t].view(-1)
+                    output_hinge = output[t].view(-1)
                     loss_t = loss_sq_hinge(output, target)
                     loss += loss_t
                     loss_sum[t] += loss.item()
-                    acc_t  = torch.sigmoid(output[t]).ge(0.5).eq(target).sum() / len(image)
+                    acc_t  = torch.sigmoid(output_hinge).ge(0.5).eq(target_hinge).sum() / len(image)
                     acc_sum[t] += acc_t.item()
                 elif cfg.criterion == 'HINGE_BCE':
                     # hinge
@@ -341,7 +341,7 @@ def test_epoch(summary, cfg, args, model, dataloader, q_list, k_list, loss_sq_hi
                     output_hinge = output[t].view(-1)
                     loss_hinge = loss_sq_hinge(output, target)
                         # acc should be same but whatever
-                    acc_hinge  = torch.sigmoid(output[t]).ge(0.5).float().eq(target).float().sum() / len(image)
+                    acc_hinge  = torch.sigmoid(output_hinge).ge(0.5).float().eq(target_hinge).float().sum() / len(image)
                     # bce
                     loss_t, acc_t = get_loss(output, target, t, device, q_list, k_list, [], cfg)
                     # sum 'em
