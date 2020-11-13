@@ -83,6 +83,26 @@ parser.add_argument('--train_chunks', type=str, help="h5 file path for train dat
 parser.add_argument('--val_h5', type=str, help="h5 file path for val dataset")
 parser.add_argument('--chunk_count', type=int, default=0, help="usable chunk count")
 
+def get_loss(output, target, index, device, bce=True):
+    for num_class in cfg.num_classes:
+        assert num_class == 1
+        
+    target = target[:, index].view(-1)
+    pos_weight = torch.from_numpy(np.array(cfg.pos_weight, dtype=np.float32)).to(device).type_as(target)
+    if cfg.batch_weight:
+        if target.sum() == 0:
+            loss = torch.tensor(0., requires_grad=True).to(device)
+        else:
+            weight = (target.size()[0] - target.sum()) / target.sum()
+            loss = F.binary_cross_entropy_with_logits(
+                output[index].view(-1), target, pos_weight=weight)
+    else:
+        loss = F.binary_cross_entropy_with_logits(output[index].view(-1), target, pos_weight=pos_weight[index])
+
+    label = torch.sigmoid(output[index].view(-1)).ge(0.5).float()
+    acc = (target == label).float().sum() / len(label)
+
+    return (loss, acc)
 def get_loss(output, target, index, device, gce_q_list, gce_k_list, gce_weight_list, cfg):
     if cfg.criterion == 'BCE':
         for num_class in cfg.num_classes:
@@ -165,7 +185,7 @@ def train_epoch(summary, summary_dev, cfg, args, model, dataloader,
                 loss_hinge = loss_sq_hinge(output_hinge, target_hinge)
                 acc_hinge  = torch.sigmoid(output_hinge).ge(0.5).float().eq(target_hinge).float().sum() / len(image)
                 #bce
-                loss_t, acc_t = get_loss(output, target, t, device, q_list, k_list, [], cfg)
+                loss_t, acc_t = get_loss(output, target, t, device)
                 loss_general = (loss_t + loss_hinge).div(2)
                 loss        += loss_general
                 loss_sum[t] += loss_general.item()
@@ -336,18 +356,17 @@ def test_epoch(summary, cfg, args, model, dataloader, q_list, k_list, loss_sq_hi
                     acc_t  = torch.sigmoid(output_hinge).ge(0.5).eq(target_hinge).sum() / len(image)
                     acc_sum[t] += acc_t.item()
                 elif cfg.criterion == 'HINGE_BCE':
-                    # hinge
+                    #hinge
                     target_hinge = target[:, t].view(-1)
                     output_hinge = output[t].view(-1)
-                    loss_hinge = loss_sq_hinge(output, target)
-                        # acc should be same but whatever
+                    loss_hinge = loss_sq_hinge(output_hinge, target_hinge)
                     acc_hinge  = torch.sigmoid(output_hinge).ge(0.5).float().eq(target_hinge).float().sum() / len(image)
-                    # bce
-                    loss_t, acc_t = get_loss(output, target, t, device, q_list, k_list, [], cfg)
-                    # sum 'em
+                    #bce
+                    loss_t, acc_t = get_loss(output, target, t, device)
                     loss_general = (loss_t + loss_hinge).div(2)
                     loss        += loss_general
-                    acc_sum[t]  += (acc_t.item() + acc_hinge.item())/2
+                    loss_sum[t] += loss_general.item()
+                    acc_sum[t]  += (acc_t.item() + acc_hinge.item())
                 else:
                     loss_t, acc_t = get_loss(output, target, t, device, q_list, k_list, [], cfg)
                     loss += loss_t
