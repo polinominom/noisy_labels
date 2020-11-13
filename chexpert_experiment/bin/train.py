@@ -320,12 +320,13 @@ def test_epoch(summary, cfg, args, model, dataloader, q_list, k_list, loss_sq_hi
             target = target.to(device).float()
             output, logit_map = model(image)
             # get the loss
-            #loss = 0
+            loss = 0
             for t in range(num_tasks):
                 if cfg.criterion == 'HINGE':
+                    loss_t = loss_sq_hinge(output[t], target[t]) 
+                    loss += loss_t
                     acc_t  = torch.sigmoid(output[t]).ge(0.5).eq(target).sum() / len(image)
                     acc_sum[t] += acc_t.item()
-
                 elif cfg.criterion == 'HINGE_BCE':
                     acc_hinge  = torch.sigmoid(output[t]).ge(0.5).float().eq(target).float().sum() / len(image)
                     loss_t, acc_t = get_loss(output, target, t, device, q_list, k_list, [], cfg)
@@ -346,7 +347,7 @@ def test_epoch(summary, cfg, args, model, dataloader, q_list, k_list, loss_sq_hi
                     predlist[t] = np.append(predlist[t], output_tensor)
                     true_list[t] = np.append(true_list[t], target_tensor)
 
-        # summary['loss'] = loss_sum / steps
+        summary['loss'] = loss_sum / steps
         summary['acc'] = acc_sum / steps
 
         return summary, predlist, true_list
