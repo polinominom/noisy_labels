@@ -344,7 +344,7 @@ def test_epoch(summary, cfg, args, model, dataloader, q_list, k_list, loss_sq_hi
                     # loss_sum[t] += loss_t.item()
                     acc_sum[t] += acc_t.item()
 
-        summary['loss'] = loss_sum / steps
+        # summary['loss'] = loss_sum / steps
         summary['acc'] = acc_sum / steps
 
         return summary, predlist, true_list
