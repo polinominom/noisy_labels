@@ -185,7 +185,7 @@ def train_epoch(summary, summary_dev, cfg, args, model, dataloader,
                 loss_hinge = loss_sq_hinge(output_hinge, target_hinge)
                 acc_hinge  = torch.sigmoid(output_hinge).ge(0.5).float().eq(target_hinge).float().sum() / len(image)
                 #bce
-                loss_t, acc_t = get_loss(output, target, t, device)
+                loss_t, acc_t = get_loss(output, target, t, device, bce=True)
                 loss_general = (loss_t + loss_hinge).div(2)
                 loss        += loss_general
                 loss_sum[t] += loss_general.item()
@@ -362,7 +362,7 @@ def test_epoch(summary, cfg, args, model, dataloader, q_list, k_list, loss_sq_hi
                     loss_hinge = loss_sq_hinge(output_hinge, target_hinge)
                     acc_hinge  = torch.sigmoid(output_hinge).ge(0.5).float().eq(target_hinge).float().sum() / len(image)
                     #bce
-                    loss_t, acc_t = get_loss(output, target, t, device)
+                    loss_t, acc_t = get_loss(output, target, t, device, bce=True)
                     loss_general = (loss_t + loss_hinge).div(2)
                     loss        += loss_general
                     loss_sum[t] += loss_general.item()
