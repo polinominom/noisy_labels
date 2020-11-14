@@ -83,10 +83,7 @@ parser.add_argument('--train_chunks', type=str, help="h5 file path for train dat
 parser.add_argument('--val_h5', type=str, help="h5 file path for val dataset")
 parser.add_argument('--chunk_count', type=int, default=0, help="usable chunk count")
 
-def get_loss_plain(output, target, index, device, bce=True):
-    for num_class in cfg.num_classes:
-        assert num_class == 1
-        
+def get_loss_plain(output, target, index, device, cfg, bce=True):
     target = target[:, index].view(-1)
     pos_weight = torch.from_numpy(np.array(cfg.pos_weight, dtype=np.float32)).to(device).type_as(target)
     if cfg.batch_weight:
@@ -185,7 +182,7 @@ def train_epoch(summary, summary_dev, cfg, args, model, dataloader,
                 loss_hinge = loss_sq_hinge(output_hinge, target_hinge)
                 acc_hinge  = torch.sigmoid(output_hinge).ge(0.5).float().eq(target_hinge).float().sum() / len(image)
                 #bce
-                loss_t, acc_t = get_loss_plain(output, target, t, device, bce=True)
+                loss_t, acc_t = get_loss_plain(output, target, t, device, cfg, bce=True)
                 loss_general = (loss_t + loss_hinge).div(2)
                 loss        += loss_general
                 loss_sum[t] += loss_general.item()
@@ -362,7 +359,7 @@ def test_epoch(summary, cfg, args, model, dataloader, q_list, k_list, loss_sq_hi
                     loss_hinge = loss_sq_hinge(output_hinge, target_hinge)
                     acc_hinge  = torch.sigmoid(output_hinge).ge(0.5).float().eq(target_hinge).float().sum() / len(image)
                     #bce
-                    loss_t, acc_t = get_loss_plain(output, target, t, device, bce=True)
+                    loss_t, acc_t = get_loss_plain(output, target, t, device, cfg, bce=True)
                     loss_general = (loss_t + loss_hinge).div(2)
                     loss        += loss_general
                     loss_sum[t] += loss_general.item()
