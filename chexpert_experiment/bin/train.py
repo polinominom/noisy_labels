@@ -493,7 +493,7 @@ def run(args, val_h5_file):
     q_list = []
     k_list = []
     for i in range(len(cfg.num_classes)):
-        q_list.append(0.9)
+        q_list.append(0.3)
         k_list.append(0.2)
 
     k_list = torch.FloatTensor(k_list)
