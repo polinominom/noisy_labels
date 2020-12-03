@@ -124,15 +124,12 @@ def get_loss(output, target, index, device, gce_q_list, gce_k_list, gce_weight_l
         for num_class in cfg.num_classes:
             assert num_class == 1
         target = target[:, index].view(-1)
-        pos_weight = torch.from_numpy(np.array(cfg.pos_weight, dtype=np.float32)).to(device).type_as(target)
-
         q = gce_q_list[index]
         k = gce_k_list[index]
-
         output_sigmoid = torch.sigmoid(output[index].view(-1))
         #loss = torch.mean( (1 - (output_sigmoid.cpu().max(k)**q) ) / q).to(device)
-        
-        loss = ((1-(output_sigmoid.cpu()**q))/q) - ((1-(k**q))/q)
+
+        loss = ((1-(output_sigmoid[target==1].cpu()**q))/q) - ((1-(k**q))/q)
         loss = torch.mean(loss).cuda()
 
         label = torch.sigmoid(output[index].view(-1)).ge(0.5).float()
