@@ -82,6 +82,8 @@ parser.add_argument('--verbose', default=False, type=bool, help="Detail info")
 parser.add_argument('--train_chunks', type=str, help="h5 file path for train dataset")
 parser.add_argument('--val_h5', type=str, help="h5 file path for val dataset")
 parser.add_argument('--chunk_count', type=int, default=0, help="usable chunk count")
+parser.add_argument('-k',type=float, default=0.5, help="hyperparameter for GCE")
+parser.add_argument('-q',type=float, default=0.5, help="hyperparameter for GCE")
 
 def get_loss_plain(output, target, index, device, cfg, bce=True):
     target = target[:, index].view(-1)
@@ -490,8 +492,8 @@ def run(args, val_h5_file):
     q_list = []
     k_list = []
     for i in range(len(cfg.num_classes)):
-        q_list.append(0.7)
-        k_list.append(0.4)
+        q_list.append(args.q)
+        k_list.append(args.k)
 
     k_list = torch.FloatTensor(k_list)
     q_list = torch.FloatTensor(q_list)
