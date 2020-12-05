@@ -130,9 +130,9 @@ def get_loss(output, target, index, device, gce_q_list, gce_k_list, gce_weight_l
         k = gce_k_list[index]
         output_sigmoid = torch.sigmoid(output[index].view(-1))
         #loss = torch.mean( (1 - (output_sigmoid.cpu().max(k)**q) ) / q).to(device)
-
-        loss = ((1-(output_sigmoid[target==1].cpu()**q))/q) - ((1-(k**q))/q)
-        loss = torch.mean(loss).cuda()
+        loss_ones  = ((1-(output_sigmoid[target==1].cpu()**q))/q) - ((1-(k**q))/q)
+        loss_zeros = (((output_sigmoid[target==0].cpu()**q))/q) - ((1-(k**q))/q)
+        loss = torch.cat([loss_ones, loss_zeros]).mean().cuda()
 
         label = torch.sigmoid(output[index].view(-1)).ge(0.5).float()
         acc  = (target == label).float().sum() / len(label)
